@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valeo Logistics - Chargeback Management Workspace</title>
+    <style>
+        :root {
+            --valeo-green: #7DBD26;
+            --valeo-green-hover: #6aa81e;
+            --dark-gray: #777777;
+            --light-gray: #EFEFEF;
+            --border-color: #CCCCCC;
+            --text-color: #333333;
+            --alert-blue: #0275d8;
+            --bg-accent: #FFFDF0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #FFFFFF;
+            color: var(--text-color);
+            font-size: 13px;
+        }
+
+        /* Contextual Status Banner */
+        .status-banner {
+            background-color: #E6F2FF;
+            border-left: 4px solid var(--alert-blue);
+            padding: 12px 20px;
+            margin-bottom: 25px;
+            font-size: 12.5px;
+            color: #1A4A75;
+            line-height: 1.5;
+        }
+
+        /* Top Navigation Bar Layout */
+        .navbar {
+            display: flex;
+            background-color: var(--dark-gray);
+            padding: 5px 10px;
+            gap: 5px;
+            margin-bottom: 25px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .navbar a.active {
+            background-color: var(--valeo-green);
+        }
+
+        .navbar a:not(.active):hover {
+            background-color: #555555;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: var(--light-gray);
+            padding: 10px 15px;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 25px;
+            border-radius: 3px;
+        }
+
+        /* Main Workspace Container */
+        .container {
+            border: 1px solid var(--border-color);
+            padding: 0;
+            background-color: #FFF;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Section Headers */
+        .section-header {
+            background-color: #C6C6C6;
+            color: #333;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: normal;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .sub-section-header {
+            background-color: #DCDCDC;
+            color: #333;
+            padding: 10px 15px;
+            font-size: 13px;
+            margin-top: 35px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .content-body {
+            padding: 25px;
+        }
+
+        /* Action Buttons Area */
+        .btn-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 2px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-green {
+            background-color: var(--valeo-green);
+        }
+
+        .btn-green:hover {
+            background-color: var(--valeo-green-hover);
+        }
+
+        .btn-gray {
+            background-color: var(--dark-gray);
+        }
+
+        /* Tabs */
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1px;
+        }
+
+        .tab {
+            padding: 8px 20px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background-color: var(--valeo-green);
+            color: white;
+        }
+
+        .tab.inactive {
+            background-color: var(--dark-gray);
+            color: white;
+        }
+
+        /* Grid Layouts */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .span-all {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .field-desc {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        /* Form Controls */
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            box-sizing: border-box;
+            background-color: #FFFFFF;
+            font-size: 13px;
+            height: 34px;
+        }
+
+        input[readonly] {
+            background-color: #EFEFEF;
+            color: #555555;
+            cursor: not-allowed;
+            border: 1px solid #DDDDDD;
+        }
+
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        /* Custom Dropdowns */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-selection {
+            min-height: 34px;
+            padding: 4px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            background-color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .dropdown-selection:hover {
+            border-color: var(--valeo-green);
+        }
+
+        .dropdown-arrow {
+            font-size: 9px;
+            color: #777777;
+            margin-left: 8px;
+            user-select: none;
+        }
+
+        .selected-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .placeholder-text {
+            color: #888888;
+            font-size: 13px;
+        }
+
+        .chip {
+            background-color: #EFEFEF;
+            border: 1px solid #DDDDDD;
+            color: #333333;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip-remove {
+            cursor: pointer;
+            color: #888888;
+        }
+
+        .chip-remove:hover {
+            color: #D9534F;
+        }
+
+        .dropdown-options-box {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 2px 2px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-height: 210px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-sizing: border-box;
+        }
+
+        .option-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .option-item:hover {
+            background-color: #F5F5F5;
+        }
+
+        .option-item input[type="checkbox"] {
+            margin: 0;
+            width: auto;
+            height: auto;
+            pointer-events: none;
+        }
+
+        /* Allocation Matrix Table Layout */
+        .allocation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: #FFFFFF;
+        }
+
+        .allocation-table th,
+        .allocation-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .allocation-table th {
+            background-color: #F2F2F2;
+            font-weight: bold;
+        }
+
+        .allocation-container {
+            background: #FAFAFA;
+            padding: 15px;
+            border: 1px solid #CCCCCC;
+            border-radius: 2px;
+        }
+
+        /* Table Architecture Configuration */
+        .table-container {
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .shipment-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            background: #FFF;
+            white-space: nowrap;
+        }
+
+        .shipment-table th,
+        .shipment-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid #EAEAEA;
+            text-align: left;
+        }
+
+        .shipment-table th {
+            background-color: #F2F2F2;
+            font-weight: bold;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+
+        .shipment-table tbody tr:hover {
+            background-color: #F9F9F9;
+        }
+
+        .calculated-box {
+            background-color: var(--border-color);
+            border: 1px dashed #FAFAFA;
+            font-weight: bold;
+        }
+
+        .split-error-message {
+            color: #D9534F;
+            font-weight: bold;
+            margin-top: 8px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .direct-cost-sheet-container {
+            --dcs-border: #cccccc;
+            --dcs-text: #333333;
+            --dcs-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+            font-family: var(--dcs-font);
+            color: var(--dcs-text);
+            border: 1px solid var(--dcs-border);
+            border-radius: 4px;
+            overflow: hidden;
+            width: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        /* Structural Grid Isolation */
+        .direct-cost-sheet-container .dcs-header,
+        .direct-cost-sheet-container .dcs-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr 50px;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        /* Header Styling */
+        .direct-cost-sheet-container .dcs-header {
+            background-color: #ffffff;
+            font-weight: bold;
+            border-bottom: 2px solid var(--dcs-border);
+        }
+
+        .direct-cost-sheet-container .dcs-header>div {
+            padding: 12px 10px;
+            border-right: 1px solid var(--dcs-border);
+        }
+
+        .direct-cost-sheet-container .dcs-header>div:last-child {
+            border-right: none;
+        }
+
+        /* Row Styling */
+        .direct-cost-sheet-container .dcs-row {
+            border-bottom: 1px solid var(--dcs-border);
+            background-color: #ffffff;
+        }
+
+        .direct-cost-sheet-container .dcs-row:hover {
+            background-color: #f9f9f9;
+        }
+
+        .direct-cost-sheet-container .dcs-row>div {
+            padding: 8px 10px;
+            border-right: 1px solid var(--dcs-border);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .direct-cost-sheet-container .dcs-row>div:last-child {
+            border-right: none;
+        }
+
+        /* Input Normalization */
+        .direct-cost-sheet-container input[type="text"],
+        .direct-cost-sheet-container input[type="number"],
+        .direct-cost-sheet-container input[type="date"] {
+            width: 100%;
+            border: 1px solid transparent;
+            padding: 6px;
+            font-size: 14px;
+            color: var(--dcs-text);
+            background: transparent;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .direct-cost-sheet-container input[type="text"]:focus,
+        .direct-cost-sheet-container input[type="number"]:focus,
+        .direct-cost-sheet-container input[type="date"]:focus {
+            border-color: #0066cc;
+            background-color: #ffffff;
+            outline: none;
+        }
+
+        /* Specific Sub-Elements */
+        .direct-cost-sheet-container .dcs-currency-wrapper {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .direct-cost-sheet-container .dcs-file-upload input[type="file"] {
+            display: none;
+        }
+
+        .direct-cost-sheet-container .dcs-file-upload span {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .direct-cost-sheet-container .dcs-uploaded-file {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .direct-cost-sheet-container .dcs-btn-remove-file {
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Actions & Footers */
+        .direct-cost-sheet-container .dcs-btn-delete {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .direct-cost-sheet-container .dcs-btn-delete:hover {
+            color: #ff3333;
+        }
+
+        .direct-cost-sheet-container .dcs-footer {
+            padding: 12px;
+            background-color: #fcfcfc;
+            border-top: 1px solid var(--dcs-border);
+        }
+
+        .direct-cost-sheet-container .dcs-btn-add {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #ffffff;
+            border: 1px dashed #0066cc;
+            color: #0066cc;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .direct-cost-sheet-container .dcs-btn-add:hover {
+            background-color: #f0f7ff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="status-banner">
+        <strong>💡 Direct Costs Tracking Restriction:</strong> Multi-installment claims can be processed sequentially as
+        milestones are passed. Per corporate guidelines, only <strong>direct logistics expenses</strong> may be routed
+        into the cost recovery flow.
+    </div>
+
+    <div class="navbar">
+        <a href="#">Home</a>
+        <a href="#">Create Red Alert</a>
+        <a href="#" class="active">Chargeback Management</a>
+        <a href="#">List Red Alerts</a>
+        <a href="#">Reports</a>
+        <a href="#">Manage Alerts</a>
+        <a href="#">Settings</a>
+        <a href="#">Sync ED Roles</a>
+        <a href="#">Help</a>
+    </div>
+
+    <div class="breadcrumb">
+        Home / Chargeback / LOG000036454
+    </div>
+
+    <div class="container">
+
+        <div class="section-header">Chargeback Management Dashboard</div>
+
+        <div class="content-body">
+
+            <div class="grid-2" style="margin-bottom: 25px;">
+                <div class="form-group">
+                    <label>Chargeback ID</label>
+                    <input type="text" value="CB000001-LOG000036454" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <input type="text" value="Draft" readonly>
+                </div>
+            </div>
+
+            <div class="btn-container">
+                <button class="btn btn-green">💾 Save Progress</button>
+                <button class="btn btn-green">↩ Go Back to Red Alert</button>
+            </div>
+
+            <div class="tab-container">
+                <button class="tab active">Details</button>
+                <button class="tab inactive">History</button>
+            </div>
+
+            <div class="sub-section-header" style="margin-top: 0;">Details</div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Pilot Name/Email</label>
+                    <input type="text" value="jaya-priya.mohan@apps-test.valeo.com" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Parent Red Alert</label>
+                    <input type="text" value="LOG000036454" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Created Date</label>
+                    <input type="text" value="Wed, 13 May 2026 06:28:39 GMT" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Updated Date</label>
+                    <input type="text" value="Fri, 05 Jun 2026 13:44:21 GMT" readonly>
+                </div>
+                <div class="form-group">
+                    <label>PF Start Date</label>
+                    <input type="date" value="2026-06-05">
+                </div>
+                <div class="form-group">
+                    <label>PF End Date</label>
+                    <input type="date" value="2026-06-30">
+                </div>
+            </div>
+
+            <div class="sub-section-header">E4P System Integration (Executed Shipments)</div>
+            <p style="margin: -10px 0 15px 0; font-size: 11.5px; color: #666;">
+                🔄 Real-time data sync connection routed to BigQuery Cloud Repository Instance:
+                <code>value CP 2129, part Executive Chief</code>.
+            </p>
+
+            <div class="grid-4"
+                style="background: #FAFAFA; padding: 15px; border: 1px solid var(--border-color); border-radius: 2px; row-gap: 15px;">
+                <div class="form-group">
+                    <label>Orgaloc (Entry Filter)</label>
+                    <input type="text" id="filter_orgaloc" value="" placeholder="Search Orgaloc...">
+                    <div class="field-desc">Core primary organizational operating hub filter criteria.</div>
+                </div>
+                <div class="form-group">
+                    <label>Pickup Date (pu_date)</label>
+                    <input type="date" id="filter_pudate" value="">
+                    <div class="field-desc">Operational dispatch date baseline benchmark.</div>
+                </div>
+                <div class="form-group">
+                    <label>LRA # (Logistic_Red_Alert)</label>
+                    <input type="text" id="filter_lra" value="" placeholder="Filter by LRA ID...">
+                    <div class="field-desc">Logistics Red Alert tracking reference ID.</div>
+                </div>
+                <div class="form-group">
+                    <label>CC (Cost_Center)</label>
+                    <input type="text" id="filter_cc" placeholder="e.g. E08">
+                    <div class="field-desc">Accounting cost allocation structure entity center.</div>
+                </div>
+                <div class="form-group">
+                    <label>Rechargeable (Freight_Rechargeable)</label>
+                    <select id="filter_rechargeable">
+                        <option value="">-- All Statuses --</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="field-desc">Defines if expense candidate for dispute settlements.</div>
+                </div>
+                <div class="form-group">
+                    <label>Project (Project_Name)</label>
+                    <input type="text" id="filter_project" placeholder="e.g. Microchip X">
+                    <div class="field-desc">Manufacturing line or variant project name mapping reference.</div>
+                </div>
+                <div class="form-group span-all"
+                    style="margin-top: 5px; display: flex; flex-direction: row; gap: 10px;">
+                    <button class="btn btn-gray" type="button" onclick="fetchShipmentData(0)"
+                        style="align-self: flex-start; padding: 7px 28px; font-size: 11px;">Search</button>
+                    <button class="btn btn-gray" type="button" id="btnClearFilters" onclick="clearFilters()" disabled
+                        style="align-self: flex-start; padding: 6px 12px; font-size: 11px;">✖ Clear Filters</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="shipment-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45px; text-align: center;" title="Select/Unselect All">
+                                <input type="checkbox" id="selectAllCheckbox" checked
+                                    onchange="toggleAllShipments(this)">
+                            </th>
+                            <th>TO #</th>
+                            <th>LSP</th>
+                            <th>Orgaloc</th>
+                            <th>Mode</th>
+                            <th>Pickup date</th>
+                            <th>LRA #</th>
+                            <th>Project</th>
+                            <th>Type</th>
+                            <th>CC</th>
+                            <th>Rechargeable</th>
+                            <th>To</th>
+                            <th>Price</th>
+                            <th>Currency</th>
+                            <th>Price €</th>
+                            <th>Reason</th>
+                            <th>Root Cause</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipmentTableBody">
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-controls" id="paginationControls"
+                style="display: none; justify-content: space-between; align-items: center; margin-top: 15px;">
+                <div style="font-size: 12px; color: #666;">
+                    Showing page <strong id="pageNumberDisplay">1 of 1</strong>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-gray" id="btnPrevPage" onclick="changePage(-1)"
+                        style="padding: 5px 12px; display: none;">◀ Previous</button>
+                    <button class="btn btn-gray" id="btnNextPage" onclick="changePage(1)"
+                        style="padding: 5px 12px; display: none;">Next ▶</button>
+                </div>
+            </div>
+
+            <div class="sub-section-header">Section of Financial</div>
+
+            <div class="grid-3"
+                style="margin-bottom: 15px; background: #FFFFFF; padding: 12px; border: 1px solid var(--border-color); border-radius: 2px;">
+                <div class="form-group">
+                    <label>Total cost Forcasted (€)</label>
+                    <input type="number" id="fin_total_budget" value="15000" oninput="calculateFinancialMatrix()"
+                        style="background-color: #FFFFFF; border: 1px solid var(--border-color);">
+                    <div class="field-desc">Ordered + cost to be spent.</div>
+                </div>
+
+            </div>
+            <div style="margin-bottom: 15px; background: #FFFFFF; padding: 1px;">
+                <div class="direct-cost-sheet-container">
+
+                    <div class="dcs-header">
+                        <div>Direct cost item Description</div>
+                        <div>Cost (€)</div>
+                        <div>Order Date</div>
+                        <div>Upload support</div>
+                        <div></div>
+                    </div>
+
+                    <div class="dcs-body" id="dcsTableBody">
+
+                        <div class="dcs-row">
+                            <div>
+                                <input type="text" placeholder="description" />
+                            </div>
+                            <div>
+                                <div class="dcs-currency-wrapper">
+                                    <input type="number" class="dcs-cost-input" step="0.01" placeholder="0.00"
+                                        oninput="calculateDcsTotal()" />
+                                    <span>€</span>
+                                </div>
+                            </div>
+                            <div>
+                                <input type="date" placeholder="DD/MM/YYYY" />
+                            </div>
+                            <div>
+                                <label class="dcs-file-upload">
+                                    <input type="file" onchange="handleFileChange(this)" />
+                                    <span>Choose file</span>
+                                </label>
+                            </div>
+                            <div>
+                                <button class="dcs-btn-delete" title="Delete row"
+                                    onclick="deleteRow(this)">&times;</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="dcs-footer">
+                        <button class="dcs-btn-add" id="dcsAddRowBtn">
+                            <span>+</span> Add Source
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+            <div class="grid-3"
+                style="margin-bottom: 15px; border-left: 4px solid var(--valeo-green); padding-left: 15px;">
+                <div class="form-group">
+                    <label>Total PF Ordered</label>
+                    <input type="text" id="fin_pf_ordered" class="calculated-box" value="0.00 EUR" readonly>
+                    <div class="field-desc">Calculated via active selections from integrated E4P system grid below.
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Other Additional Cost Ordered</label>
+                    <input type="text" id="fin_other_ordered" class="calculated-box" value="0.00 EUR" readonly>
+                    <div class="field-desc">Sum of the Direct cost item</div>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #555;">Total Cost Ordered</label>
+                    <input type="text" id="fin_total_ordered" class="calculated-box" value="0.00 EUR" readonly>
+                    <div class="field-desc"> Appends Total PF Ordered + Other Additional Cost Ordered values cleanly.
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3"
+                style="margin-bottom: 25px; border-left: 4px solid var(--alert-blue); padding-left: 15px; display: none;">
+                <div class="form-group">
+                    <label>Total PF Forecast (€)</label>
+                    <input type="number" id="fin_pf_forecast" value="2000" oninput="calculateFinancialMatrix()"
+                        style="background-color: #FFFFFF; border: 1px solid var(--border-color)">
+                    <div class="field-desc">Estimated processing value for un-dispatched pipeline transport steps.</div>
+                </div>
+                <div class="form-group">
+                    <label>Other Additional Cost Forecast</label>
+                    <input type="number" id="fin_other_forecast" value="300" oninput="calculateFinancialMatrix()"
+                        style="background-color: #FFFFFF; border: 1px solid var(--border-color);">
+                    <div class="field-desc">Estimated accessory charges expected dynamically ahead.</div>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #555;">Total Additional Cost Forecast</label>
+                    <input type="text" id="fin_total_forecast" class="calculated-box" value="0.00 EUR" readonly>
+                    <div class="field-desc"> Appends Total PF Forecast + Other Additional Cost Forecast values cleanly.
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 20px 0;">
+
+            <div class="grid-3">
+                <div class="form-group" style="display: none;">
+                    <label>Total Expense Under Estimation</label>
+                    <input type="text" id="fin_total_estimation" class="calculated-box" value="0.00 EUR" readonly>
+                    <div class="field-desc">Accumulates Total Additional Cost
+                        Ordered + PF Estimated.</div>
+                </div>
+                <div class="form-group">
+                    <label>GAP Variance</label>
+                    <input type="text" id="fin_gap_variance" class="calculated-box" value="0.00 EUR" readonly
+                        style="font-weight: bold; font-size: 14px;">
+                    <div class="field-desc">computed as Cost to be spent</div>
+                </div>
+            </div>
+
+            <div class="sub-section-header">ROOT CAUSE & INTERACTIVE CONTROL</div>
+            <div class="grid-2">
+
+                <div class="form-group span-all">
+                    <label>Chargeback Origin Group</label>
+                    <div class="custom-dropdown" id="originDropdownContainer">
+                        <div class="dropdown-selection" onclick="toggleDropdown(event, 'originOptions')">
+                            <div class="selected-chips" id="originChipsContainer">
+                                <span class="placeholder-text">Select Origin(s)...</span>
+                            </div>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="dropdown-options-box" id="originOptions">
+                            <div class="option-item"
+                                onclick="selectOption(event, 'supplier', 'External Supplier Fault')">
+                                <input type="checkbox" id="chk_supplier"> External Supplier Fault
+                            </div>
+                            <div class="option-item"
+                                onclick="selectOption(event, 'carrier', 'Logistics Transportation Carrier')">
+                                <input type="checkbox" id="chk_carrier"> Logistics Transportation Carrier
+                            </div>
+                            <div class="option-item"
+                                onclick="selectOption(event, 'customer', 'Customer Mandated Variation')">
+                                <input type="checkbox" id="chk_customer"> Customer Mandated Variation
+                            </div>
+                            <div class="option-item"
+                                onclick="selectOption(event, 'internal', 'Internal Plant Operational Deviation')">
+                                <input type="checkbox" id="chk_internal"> Internal Plant Operational Deviation
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field-desc">Select all responsible originating groups to build the allocation framework
+                        matrix below.</div>
+                </div>
+
+                <div class="form-group span-all">
+                    <label>Proportional Cost Allocation Split Proposal Matrix</label>
+                    <div class="allocation-container">
+                        <div id="matrixPlaceholder" class="placeholder-text">
+                            -- Please select one or more Origin groups to configure reasons and split calculations --
+                        </div>
+
+                        <table class="allocation-table" id="allocationMatrixTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Selected Origin & Details</th>
+                                    <th style="width: 15%;">App</th>
+                                    <th style="width: 15%;">Identification</th>
+                                    <th style="width: 20%;">Assigned Apportionment Reason</th>
+                                    <th style="width: 15%;">Cost Split Allocation Share (%)</th>
+                                    <th style="width: 10%;">Target Claim Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matrixTableBody">
+                            </tbody>
+                        </table>
+
+                        <div class="split-error-message" id="splitSumError">
+                        </div>
+
+                        <div id="matrixSummarySection"
+                            style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #CCCCCC;">
+                            <div style="display: flex; gap: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Total Refunded Amount</label>
+                                    <input type="text" id="matrix_total_actual" class="calculated-box" value="0.00 EUR"
+                                        readonly>
+                                        <div class="field-desc">Sum of the Refunded Amount</div>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Total Target Claim Value</label>
+                                    <input type="text" id="matrix_total_cost" class="calculated-box" value="0.00 EUR"
+                                        readonly>
+                                    <div class="field-desc">Sum of the Target Claim Value</div>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Total Ordered Cost</label>
+                                    <input type="text" id="matrix_total_ordered" class="calculated-box" value="0.00 EUR"
+                                        readonly>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Remaining Balance</label>
+                                    <input type="text" id="matrix_remaining" class="calculated-box" value="0.00 EUR"
+                                        readonly>
+                                    <div class="field-desc">Difference between the Target Claim Value - Refunded Amount</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field-desc">Establishes the final structured dispute parameters sent across to
+                        downstream SRM or Claims tracking apps.</div>
+                </div>
+
+            </div>
+
+            <div class="sub-section-header">Deviation Exceptions & Dispute Evidence Tracking</div>
+            <div class="grid-2">
+                <div class="form-group span-all">
+                    <label>Manual Entry Reason / System Deviation Statement</label>
+                    <textarea
+                        placeholder="In case operations did not use the standard E4P system connection to arrange premium logistics, input your authorized deviation statement and billing notes here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Comments / Interactive Team Trail logs</label>
+                    <textarea
+                        placeholder="Add communication logs or cross-reference claim details assigned via the external internal teams..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Attachment Upload</label>
+                    <input type="file" style="padding: 5px;">
+                    <div class="field-desc">Provide direct balance calculation files, shipping confirmations, or
+                        approval notifications.</div>
+                </div>
+
+                <!-- <div class="form-group">
+                    <label>SRM</label>
+                    <input type="text" placeholder="Enter claims tracking module link identifier">
+                </div> -->
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('dcsAddRowBtn').addEventListener('click', function () {
+            const tableBody = document.getElementById('dcsTableBody');
+
+            // Create a new fresh row element
+            const newRow = document.createElement('div');
+            newRow.className = 'dcs-row';
+
+            // Set up template for the added row
+            newRow.innerHTML = `
+      <div>
+        <input type="text" placeholder="description" value="" />
+      </div>
+      <div>
+        <div class="dcs-currency-wrapper">
+          <input type="number" class="dcs-cost-input" step="0.01" placeholder="0.00" value="" oninput="calculateDcsTotal()" />
+          <span>€</span>
+        </div>
+      </div>
+      <div>
+        <input type="date" placeholder="DD/MM/YYYY" value="" />
+      </div>
+      <div>
+        <label class="dcs-file-upload">
+          <input type="file" onchange="handleFileChange(this)" />
+          <span>Choose file</span>
+        </label>
+      </div>
+      <div>
+        <button class="dcs-btn-delete" title="Delete row" onclick="deleteRow(this)">&times;</button>
+      </div>
+    `;
+
+            tableBody.appendChild(newRow);
+        });
+
+        // Function to delete a row
+        function deleteRow(buttonElement) {
+            // Finds the closest parent row and removes it from the table
+            const row = buttonElement.closest('.dcs-row');
+            if (row) {
+                row.remove();
+                calculateDcsTotal();
+            }
+        }
+
+        // Function to recalculate the cumulative cost from the DCS component rows
+        function calculateDcsTotal() {
+            let total = 0;
+            document.querySelectorAll('.dcs-cost-input').forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) { total += val; }
+            });
+            document.getElementById('fin_other_ordered').value = total.toFixed(2) + " EUR";
+            calculateFinancialMatrix();
+        }
+
+        // Function to show file name once uploaded
+        function handleFileChange(inputElement) {
+            if (inputElement.files && inputElement.files[0]) {
+                const fileName = inputElement.files[0].name;
+                const cellContainer = inputElement.closest('div'); // targeting the column wrapper
+
+                // Swap out the file input look for the named file look
+                cellContainer.innerHTML = `
+        <div class="dcs-uploaded-file">
+          <span>${fileName}</span>
+          <button class="dcs-btn-remove-file" title="Remove" onclick="resetFileInput(this)">&times;</button>
+        </div>
+      `;
+            }
+        }
+
+        // Function to clear file and restore the original "Choose file" button
+        function resetFileInput(buttonElement) {
+            const cellContainer = buttonElement.closest('div').parentElement;
+
+            cellContainer.innerHTML = `
+      <label class="dcs-file-upload">
+        <input type="file" onchange="handleFileChange(this)" />
+        <span>Choose file</span>
+      </label>
+    `;
+        }
+    </script>
+
+    <script>
+        const reasonMapping = {
+            supplier: [
+                { value: "sup_shortage", text: "Material Supply Shortage" },
+                { value: "sup_capacity", text: "Supplier Capacity Constraint" },
+                { value: "sup_quality", text: "Supplier Quality / Scrap Core Issue" },
+                { value: "sup_spares", text: "Missing Component Spares" }
+            ],
+            carrier: [
+                { value: "car_pickup", text: "Carrier Missed Pickup Window Milestone" },
+                { value: "car_capacity", text: "Transportation Carrier Capacity Issue" },
+                { value: "car_accident", text: "Transit Delay / Customs Hold-up" }
+            ],
+            customer: [
+                { value: "cust_change", text: "Customer Engineering Design Modification" },
+                { value: "cust_forecast", text: "Inaccurate Customer Demand Forecast" },
+                { value: "cust_schedule", text: "Sudden Customer Production Reschedule" }
+            ],
+            internal: [
+                { value: "int_scrap", text: "Internal Plant Scrap / Equipment Downtime" },
+                { value: "int_inventory", text: "Inventory Discrepancy / Warehouse Error" },
+                { value: "int_planning", text: "Local Site Production Planning Conflict" }
+            ]
+        };
+
+        let trackingSelections = { origin: {} };
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            const dropdown = document.getElementById(id);
+            const isVisible = dropdown.style.display === 'block';
+            closeAllDropdowns();
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-options-box').forEach(box => box.style.display = 'none');
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.closest('.custom-dropdown')) { closeAllDropdowns(); }
+        }
+
+        function selectOption(event, value, text) {
+            event.stopPropagation();
+            const checkbox = document.getElementById(`chk_${value}`);
+            if (trackingSelections.origin[value]) {
+                delete trackingSelections.origin[value];
+                if (checkbox) checkbox.checked = false;
+            } else {
+                trackingSelections.origin[value] = text;
+                if (checkbox) checkbox.checked = true;
+            }
+            renderChips();
+            rebuildMatrixTable();
+        }
+
+        function renderChips() {
+            const container = document.getElementById("originChipsContainer");
+            container.innerHTML = '';
+            const keys = Object.keys(trackingSelections.origin);
+            if (keys.length === 0) {
+                container.innerHTML = '<span class="placeholder-text">Select Origin(s)...</span>';
+                return;
+            }
+            keys.forEach(key => {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.innerHTML = `${trackingSelections.origin[key]} <span class="chip-remove" onclick="removeChip(event, '${key}')">✕</span>`;
+                container.appendChild(chip);
+            });
+        }
+
+        function removeChip(event, key) {
+            event.stopPropagation();
+            selectOption(event, key, '');
+        }
+
+        function rebuildMatrixTable() {
+            const placeholder = document.getElementById("matrixPlaceholder");
+            const table = document.getElementById("allocationMatrixTable");
+            const tbody = document.getElementById("matrixTableBody");
+            const selectedOrigins = Object.keys(trackingSelections.origin);
+
+            let cachedRowsState = {};
+            document.querySelectorAll(".matrix-row").forEach(row => {
+                const rowKey = row.getAttribute("data-origin-key");
+                const reasonSelect = row.querySelector(".reason-select");
+                const splitInput = row.querySelector(".split-input");
+                const appSelect = row.querySelector(".app-select");
+                const identificationInput = row.querySelector(".identification-input");
+                const actualPriceInput = row.querySelector(".allocation-actual-price");
+
+                if (rowKey) {
+                    cachedRowsState[rowKey] = {
+                        reason: reasonSelect ? reasonSelect.value : "",
+                        split: splitInput ? splitInput.value : "0",
+                        app: appSelect ? appSelect.value : "",
+                        identification: identificationInput ? identificationInput.value : "",
+                        actualPrice: actualPriceInput ? actualPriceInput.value : ""
+
+                    };
+                }
+            });
+
+            tbody.innerHTML = '';
+            if (selectedOrigins.length === 0) {
+                placeholder.style.display = 'block';
+                table.style.display = 'none';
+                calculateSplitSum();
+                return;
+            }
+            placeholder.style.display = 'none';
+            table.style.display = 'table';
+
+            selectedOrigins.forEach(originKey => {
+                const row = document.createElement('tr');
+                row.className = "matrix-row";
+                row.setAttribute("data-origin-key", originKey);
+
+                const prevActualPrice = (cachedRowsState[originKey]) ? cachedRowsState[originKey].actualPrice : "";
+                const cellOrigin = document.createElement('td');
+                cellOrigin.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 8px; color: #1A4A75;">${trackingSelections.origin[originKey]}</div>
+                    <input type="number" class="allocation-actual-price" step="0.01" placeholder="Refunded Amount (€)" style="margin-bottom: 5px;" value="${prevActualPrice}" oninput="calculateSplitSum()">
+                    <textarea class="allocation-comment" rows="1" placeholder="Add comments..."></textarea>
+                `;
+
+                const prevApp = (cachedRowsState[originKey]) ? cachedRowsState[originKey].app : "";
+                const cellApp = document.createElement('td');
+                cellApp.innerHTML = `
+                    <select class="app-select">
+                        <option value="" ${prevApp === "" ? "selected" : ""}>-- Select App --</option>
+                        <option value="SRM" ${prevApp === "SRM" ? "selected" : ""}>SRM</option>
+                        <option value="CLAIM" ${prevApp === "CLAIM" ? "selected" : ""}>T&W Claims</option>
+                        <option value="CLAIM" ${prevApp === "Other" ? "selected" : ""}>Claim to Customer</option>
+                    </select>
+                `;
+
+                const prevId = (cachedRowsState[originKey]) ? cachedRowsState[originKey].identification : "";
+                const cellIdentification = document.createElement('td');
+                cellIdentification.innerHTML = `
+                    <input type="text" class="identification-input" value="${prevId}" placeholder="Enter ID" style="width: 100%; box-sizing: border-box;">
+                `;
+
+                const cellReason = document.createElement('td');
+                const selectElement = document.createElement('select');
+                selectElement.className = "reason-select";
+
+                const defaultOption = document.createElement('option');
+                defaultOption.text = "-- Select Specific Reason Flow --";
+                defaultOption.value = "";
+                selectElement.add(defaultOption);
+
+                if (reasonMapping[originKey]) {
+                    reasonMapping[originKey].forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.value;
+                        option.text = item.text;
+                        if (cachedRowsState[originKey] && cachedRowsState[originKey].reason === item.value) { option.selected = true; }
+                        selectElement.add(option);
+                    });
+                }
+                cellReason.appendChild(selectElement);
+
+                const cellSplit = document.createElement('td');
+                const previousSplitVal = (cachedRowsState[originKey]) ? cachedRowsState[originKey].split : "0";
+                cellSplit.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="number" class="split-input" min="0" max="100" value="${previousSplitVal}" oninput="calculateSplitSum()" style="width: 80px;"> 
+                        <strong>%</strong> Share
+                    </div>
+                `;
+
+                const cellCost = document.createElement('td');
+                cellCost.className = "split-cost-display";
+                cellCost.innerHTML = `<strong>0.00 EUR</strong>`;
+
+                row.appendChild(cellOrigin);
+                row.appendChild(cellApp);
+                row.appendChild(cellIdentification);
+                row.appendChild(cellReason);
+                row.appendChild(cellSplit);
+                row.appendChild(cellCost);
+
+                tbody.appendChild(row);
+            });
+            calculateSplitSum();
+        }
+
+        function calculateSplitSum() {
+            let runningSum = 0;
+            let totalSplitCost = 0;
+            let totalActualPrice = 0;
+            const totalOrderedStr = document.getElementById("fin_total_ordered").value || "0";
+            const totalOrdered = parseFloat(totalOrderedStr) || 0;
+
+            document.querySelectorAll(".matrix-row").forEach(row => {
+                const input = row.querySelector(".split-input");
+                const costDisplay = row.querySelector(".split-cost-display");
+                const actualPriceInput = row.querySelector(".allocation-actual-price");
+                const val = parseInt(input.value);
+                const safeVal = isNaN(val) ? 0 : val;
+                // runningSum += safeVal;
+
+                if (costDisplay) {
+                    const rowCost = (safeVal / 100) * totalOrdered;
+                    totalSplitCost += rowCost;
+                    costDisplay.innerHTML = `<strong>${rowCost.toFixed(2)} EUR</strong>`;
+                }
+
+                if (actualPriceInput) {
+                    const priceVal = parseFloat(actualPriceInput.value);
+                    if (!isNaN(priceVal)) {
+                        totalActualPrice += priceVal;
+                        runningSum += priceVal;
+                    }
+                }
+            });
+            const errorElement = document.getElementById("splitSumError");
+
+            let message = "";
+            let isError = true;
+            const thresholdCost = 0.9 * totalOrdered;
+            const runningSumCost = parseInt((runningSum / totalOrdered) * 100);
+
+            if (totalOrdered > 0) {
+                if (totalOrdered > 10000) {
+                    if (runningSum < thresholdCost) {
+                        message = `⚠️ System Warning: Cannot close chargeback. Total chargeback Cost (${runningSumCost}%) must be ≥90% when Total Ordered Cost > 10k€.`;
+                        isError = true;
+                    } else {
+                        message = `✅ Ready to close: Total chargeback Cost ≥90% of Total Ordered Cost.`;
+                        isError = false;
+                    }
+                } else {
+                    if (runningSum < thresholdCost) {
+                        message = `⚠️ System Warning: Total chargeback Cost (${runningSumCost}%) is <90%. Cannot close chargeback unless validated by RO.`;
+                        isError = true;
+                    } else {
+                        message = `✅ Ready to close: Total chargeback Cost ≥90% of Total Ordered Cost.`;
+                        isError = false;
+                    }
+                }
+            }
+
+            if (document.querySelectorAll(".matrix-row").length > 0) {
+                errorElement.innerHTML = message;
+                errorElement.style.color = isError ? "#D9534F" : "#4A751A";
+                errorElement.style.display = "block";
+            } else {
+                errorElement.style.display = "none";
+            }
+
+            // Update matrix summary fields dynamically
+            const summarySection = document.getElementById("matrixSummarySection");
+            if (document.querySelectorAll(".matrix-row").length > 0) {
+                summarySection.style.display = "block";
+                document.getElementById("matrix_total_actual").value = totalActualPrice.toFixed(2) + " EUR";
+                document.getElementById("matrix_total_cost").value = totalSplitCost.toFixed(2) + " EUR";
+                document.getElementById("matrix_total_ordered").value = totalOrdered.toFixed(2) + " EUR";
+
+                const remaining = totalOrdered - runningSum;
+                const remainingField = document.getElementById("matrix_remaining");
+                remainingField.value = remaining.toFixed(2) + " EUR";
+
+                // Set warning color if remaining does not balance (using 0.01 for JS floating-point safety)
+                remainingField.style.color = Math.abs(remaining) > 0.01 ? "#D9534F" : "#4A751A";
+            } else {
+                if (summarySection) summarySection.style.display = "none";
+            }
+        }
+
+        function toggleAllShipments(masterCheckbox) {
+            document.querySelectorAll(".shipment-checkbox").forEach(checkbox => {
+                checkbox.checked = masterCheckbox.checked;
+            });
+            calculateFinancialMatrix();
+        }
+
+        /* -------------------------------------------------------------
+           AUTOMATED TIER FINANCIAL CALCULATION CONTROLLER 
+           ------------------------------------------------------------- */
+        function calculateFinancialMatrix() {
+            let pfOrderedSum = 0;
+            let allChecked = true;
+            let anyChecked = false;
+            let count = 0;
+
+            // 1. Scan verified selection checks inside data source integration tables
+            document.querySelectorAll(".shipment-checkbox").forEach(checkbox => {
+                count++;
+                if (checkbox.checked) {
+                    anyChecked = true;
+                    const priceValue = parseFloat(checkbox.getAttribute("data-price"));
+                    if (!isNaN(priceValue)) {
+                        pfOrderedSum += priceValue;
+                    }
+                } else {
+                    allChecked = false;
+                }
+            });
+
+            // Auto update master header indicator node details
+            const masterCheckbox = document.getElementById("selectAllCheckbox");
+            if (masterCheckbox && count > 0) {
+                masterCheckbox.checked = allChecked;
+                masterCheckbox.indeterminate = !allChecked && anyChecked;
+            } else if (masterCheckbox) {
+                masterCheckbox.checked = false;
+                masterCheckbox.indeterminate = false;
+            }
+
+            // 2. Extract inputs cleanly, substituting safe fallback zeros for empty/NaN inputs
+            const budget_A = parseFloat(document.getElementById("fin_total_budget").value) || 0;
+            const otherOrdered_B1b = parseFloat(document.getElementById("fin_other_ordered").value) || 0;
+            const pfForecast_B2a = parseFloat(document.getElementById("fin_pf_forecast").value) || 0;
+            const otherForecast_B2b = parseFloat(document.getElementById("fin_other_forecast").value) || 0;
+
+            console.log("Calculated Financial Values:", {
+                budget_A: budget_A,
+                otherOrdered_B1b: otherOrdered_B1b,
+                pfForecast_B2a: pfForecast_B2a,
+                otherForecast_B2b: otherForecast_B2b
+            });
+
+
+            // 3. Process structural updates mapped directly from specifications sheet blueprint
+            const pfOrdered_B1a = pfOrderedSum;
+            const totalOrdered_B1 = pfOrdered_B1a + otherOrdered_B1b;
+            const totalForecast_B2 = pfForecast_B2a + otherForecast_B2b;
+            const totalExpense_B = totalOrdered_B1 + budget_A;
+            const gapVariance_C = budget_A - totalOrdered_B1;
+
+            // 4. Inject processed calculation strings back seamlessly into user view fields
+            document.getElementById("fin_pf_ordered").value = pfOrdered_B1a.toFixed(2) + " EUR";
+            document.getElementById("fin_total_ordered").value = totalOrdered_B1.toFixed(2) + " EUR";
+            document.getElementById("fin_total_forecast").value = totalForecast_B2.toFixed(2) + " EUR";
+            document.getElementById("fin_total_estimation").value = totalExpense_B.toFixed(2) + " EUR";
+
+            const gapField = document.getElementById("fin_gap_variance");
+            gapField.value = gapVariance_C.toFixed(2) + " EUR";
+
+            // Apply warning threshold color dynamics based on balanced variance directions
+            if (gapVariance_C < 0) {
+                gapField.style.color = "#D9534F"; // Red warning signaling over-budget metrics
+            } else {
+                gapField.style.color = "#4A751A"; // Green signaling operational budget runway availability
+            }
+
+            calculateSplitSum(); // Keep matrix allocation costs synced with the total expense 
+        }
+
+        let currentPage = 0;
+        const pageSize = 20;
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 0) {
+                fetchShipmentData(newPage);
+            }
+        }
+
+        async function fetchShipmentData(page = 0) {
+            currentPage = page;
+            const tbody = document.getElementById('shipmentTableBody');
+            const paginationControls = document.getElementById('paginationControls');
+
+            const orgaloc = document.getElementById('filter_orgaloc').value.trim();
+            const pudate = document.getElementById('filter_pudate').value.trim();
+            const lra = document.getElementById('filter_lra').value.trim();
+            const cc = document.getElementById('filter_cc').value.trim();
+            const rechargeable = document.getElementById('filter_rechargeable').value.trim();
+            const project = document.getElementById('filter_project').value.trim();
+
+            const params = new URLSearchParams({ page: currentPage, size: pageSize });
+            if (orgaloc) params.append('orgaloc', orgaloc);
+            if (pudate) params.append('pudate', pudate);
+            if (lra) params.append('lra', lra);
+            if (cc) params.append('cc', cc);
+            if (rechargeable) params.append('rechargeable', rechargeable);
+            if (project) params.append('project', project);
+
+            if (paginationControls) paginationControls.style.display = 'none';
+            tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 20px;">⏳ Loading data from BigQuery API...</td></tr>';
+
+            const btnPrev = document.getElementById('btnPrevPage');
+            const btnNext = document.getElementById('btnNextPage');
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/data?${params.toString()}`);
+                const payload = await response.json();
+
+                tbody.innerHTML = '';
+
+                const queryResult = payload.data || payload;
+                const rows = queryResult.rows || [];
+                const totalPages = payload.totalPages || 1;
+
+                if (rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="17" style="text-align: center;">No shipments found.</td></tr>';
+                    if (paginationControls) paginationControls.style.display = 'flex';
+                    document.getElementById('pageNumberDisplay').innerText = `${currentPage + 1} of ${totalPages}`;
+                    if (btnPrev) btnPrev.style.display = 'none';
+                    if (btnNext) btnNext.style.display = 'none';
+                    return;
+                }
+
+                rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'shipment-row';
+
+                    const priceEuro = parseFloat(row.price_euro || 0).toFixed(2);
+
+                    tr.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="shipment-checkbox" 
+                                   data-price="${priceEuro}" onchange="calculateFinancialMatrix()">
+                        </td>
+                        <td><strong>${row.key || ''}</strong></td>
+                        <td>${row.supplier_name || ''}</td>
+                        <td>${row.orgaloc || ''}</td>
+                        <td>${row.transport_mode || ''}</td>
+                        <td>${row.pu_date || ''}</td>
+                        <td>${row.Logistic_Red_Alert || ''}</td>
+                        <td>${row.Project_Name || ''}</td>
+                        <td>${row.Type || ''}</td>
+                        <td>${row.Cost_Center || ''}</td>
+                        <td>${row.Freight_Rechargeable || ''}</td>
+                        <td>${row.Rechargeable_to || ''}</td>
+                        <td>${row.price || ''}</td>
+                        <td>${row.currency || ''}</td>
+                        <td style="font-weight: bold;">${row.price_euro || ''} €</td>
+                        <td>${row.Reason || ''}</td>
+                        <td>${row.Root_Cause || ''}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                calculateFinancialMatrix();
+
+                if (paginationControls) paginationControls.style.display = 'flex';
+                document.getElementById('pageNumberDisplay').innerText = `${currentPage + 1} of ${totalPages}`;
+
+                if (btnPrev) {
+                    btnPrev.style.display = (currentPage === 0) ? 'none' : 'inline-block';
+                }
+                if (btnNext) {
+                    btnNext.style.display = (currentPage >= totalPages - 1) ? 'none' : 'inline-block';
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch shipment data:", error);
+                // Maintain local fallback mock visibility context if server API isn't locally actively hosting endpoints
+                tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; color: #666; padding: 12px;">ℹ️ API connection inactive. Operational mock data initialized above.</td></tr>';
+                // Append mock element to guarantee standalone operational fidelity when executing locally
+                tbody.innerHTML = `
+                    <tr class="shipment-row">
+                        <td style="text-align: center;"><input type="checkbox" checked class="shipment-checkbox" data-price="4875.74" onchange="calculateFinancialMatrix()"></td>
+                        <td><strong>VL26055COK</strong></td><td>DHL Express Logistics</td><td>E08RIB1</td><td>Road Spot</td><td>1 mai 2026</td><td>LOG000036454</td><td>Microchip X</td><td>Premium (NQC)</td><td>E08</td><td>NO</td><td>Supplier Tier 2</td><td>4875.74</td><td>EUR</td><td style="font-weight: bold;">4 875,74 €</td><td>Logistics Deviation</td><td>Capacity Constraint & Spares</td>
+                    </tr>`;
+                calculateFinancialMatrix();
+            }
+        }
+
+        function checkFilterState() {
+            const orgaloc = document.getElementById('filter_orgaloc').value.trim();
+            const pudate = document.getElementById('filter_pudate').value.trim();
+            const lra = document.getElementById('filter_lra').value.trim();
+            const cc = document.getElementById('filter_cc').value.trim();
+            const rechargeable = document.getElementById('filter_rechargeable').value.trim();
+            const project = document.getElementById('filter_project').value.trim();
+
+            const hasFilter = orgaloc || pudate || lra || cc || rechargeable || project;
+            const btnClear = document.getElementById('btnClearFilters');
+            if (btnClear) {
+                btnClear.disabled = !hasFilter;
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('filter_orgaloc').value = '';
+            document.getElementById('filter_pudate').value = '';
+            document.getElementById('filter_lra').value = '';
+            document.getElementById('filter_cc').value = '';
+            document.getElementById('filter_rechargeable').value = '';
+            document.getElementById('filter_project').value = '';
+
+            checkFilterState();
+            fetchShipmentData(0);
+        }
+
+        // Initialize equations on framework ready render window
+        window.addEventListener('DOMContentLoaded', (event) => {
+            calculateDcsTotal(); // Seed values from DCS into the matrix on load
+            calculateFinancialMatrix();
+
+            document.querySelectorAll('#filter_orgaloc, #filter_pudate, #filter_lra, #filter_cc, #filter_rechargeable, #filter_project').forEach(input => {
+                input.addEventListener('input', checkFilterState);
+                input.addEventListener('change', checkFilterState);
+            });
+            checkFilterState();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valeo Logistics Red Alert - Create Red Alert</title>
+    <style>
+        :root {
+            --valeo-green: #78be20;
+            --dark-grey: #4a4a4a;
+            --light-grey: #f4f4f4;
+            --border-grey: #ccc;
+            --section-bg: #d3d3d3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #fff;
+            color: #333;
+            font-size: 13px;
+        }
+
+        /* Header & Navigation */
+        header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-grey);
+        }
+
+        .logo-placeholder {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--valeo-green);
+            font-style: italic;
+        }
+
+        .user-info {
+            font-size: 11px;
+            color: var(--dark-grey);
+        }
+
+        nav {
+            background-color: var(--dark-grey);
+            padding: 5px 20px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            display: inline-block;
+            font-size: 12px;
+        }
+
+        nav a.active {
+            background-color: var(--valeo-green);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .breadcrumb {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        /* Section Styling */
+        .page-title {
+            background-color: var(--section-bg);
+            text-align: center;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+
+        .section-header {
+            background-color: var(--section-bg);
+            padding: 8px 12px;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-radius: 3px;
+        }
+
+        /* Tab Buttons */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background-color: var(--valeo-green);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        .tab-btn.secondary {
+            background-color: #6c757d;
+        }
+
+        /* Form Layout Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 30px;
+            row-gap: 12px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+
+        label span.required {
+            color: red;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid var(--border-grey);
+            border-radius: 3px;
+            font-size: 13px;
+            background-color: #fff;
+        }
+
+        input:disabled,
+        select:disabled,
+        textarea:disabled {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* Action Buttons Row */
+        .action-row {
+            grid-column: span 2;
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+        }
+
+        .btn-notify {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .btn-update {
+            background-color: #17a2b8;
+        }
+
+        .btn-close {
+            background-color: #dc3545;
+        }
+
+        .btn-delete {
+            background-color: #bd2130;
+        }
+
+        /* Radio Options styling */
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            height: 32px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .risk-warning {
+            color: #d39e00;
+            font-style: italic;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* Status Badges for Approval Workflows */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7.5px 12px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 13px;
+            border: 1px solid;
+            width: 100%;
+        }
+
+        .status-badge.pending {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        .status-badge.approved {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .status-badge.rejected {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        footer {
+            margin-top: 50px;
+            border-top: 1px solid var(--border-grey);
+            padding: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo-placeholder">Valeo</div>
+        <div class="user-info">prasanna-kumar.srinivasan@apps-test.valeo.com | LOGOUT</div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#">HOME</a></li>
+            <li><a href="#" class="active">CREATE RED ALERT</a></li>
+            <li><a href="#">LIST RED ALERTS</a></li>
+            <li><a href="#">REPORTS</a></li>
+            <li><a href="#">MANAGE ALERTS ▾</a></li>
+            <li><a href="#">SETTINGS</a></li>
+            <li><a href="#">SYNC ED ROLES</a></li>
+            <li><a href="#">HELP ▾</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumb">Home / Create Red Alert</div>
+
+        <div class="page-title">Create Red Alert</div>
+
+        <div class="form-grid" style="margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Alert ID</label>
+                <input type="text" disabled>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <input type="text" disabled>
+            </div>
+        </div>
+
+        <div class="action-row" style="padding: 2% 0%;">
+            <button type="button" class="tab-btn">💾 Save Alert</button>
+            <button type="button" class="tab-btn">🔔 Notify Alert</button>
+            <button type="button" class="tab-btn">🔄 Update Alert</button>
+            <button type="button" class="tab-btn">✖ Close Alert</button>
+            <button type="button" class="tab-btn">🗑 Delete</button>
+            <button type="button" class="tab-btn" id="btnChargeback" style="display: none; background-color: #0275d8;">💰 Chargeback</button>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn">DETAILS</button>
+            <button class="tab-btn secondary">ATTACHMENTS</button>
+            <button class="tab-btn secondary">SHARING SETTINGS</button>
+            <button class="tab-btn secondary">HISTORY</button>
+        </div>
+
+        <form onsubmit="event.preventDefault();">
+
+            <div class="section-header">Details</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Pilot Name</label>
+                    <input type="text" value="prasanna-kumar.srinivasan@apps-test.valeo.com" disabled>
+                </div>
+                <div class="form-group full-width">
+                    <label>Red Alert Family<span class="required">*</span></label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Region<span class="required">*</span></label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Creation Date</label>
+                    <input type="text" value="Fri, 05 Jun 2026 05:09:37 GMT" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Update/Closure Date</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Orgaloc<span class="required">*</span></label>
+                    <input type="text" value="Holding IN - Chennai 9 - H22CHE9" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Orgaloc Code</label>
+                    <input type="text" value="H22CHE9" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Business Group*</label>
+                    <input type="text" value="HOLDINGS - H00" disabled>
+                </div>
+                <div class="form-group">
+                    <label>BG Code</label>
+                    <input type="text" value="H00" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Product Group*</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>PG Code</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Product Line</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>PL Code</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Regional Operation</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>RO Code</label>
+                    <input type="text" value="-" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Entity</label>
+                    <input type="text" value="Holding IN" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Entity Code</label>
+                    <input type="text" value="H22" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Site Location</label>
+                    <input type="text" value="Chennai 9 - CHE9" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Site Location Code</label>
+                    <input type="text" value="CHE9" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Country</label>
+                    <input type="text" value="India" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Country Code</label>
+                    <input type="text" value="IN" disabled>
+                </div>
+                <div class="form-group full-width">
+                    <label>Nature of the Alert(OEM/OES/IAM)<span class="required">*</span></label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Origin of the problem<span class="required">*</span></label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Customer Name<span class="required">*</span></label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Customer Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>VALEO Customer PG</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>VALEO Customer PG Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>VALEO Customer Site</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>VALEO Customer Site Code</label>
+                    <input type="text" disabled>
+                </div>
+
+
+            </div>
+
+            <div class="section-header">Total Additional Cost</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Need ChargeBack :</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="chargeback" value="yes" onchange="toggleChargebackBtn()"> Yes</label>
+                        <label><input type="radio" name="chargeback" value="no" checked onchange="toggleChargebackBtn()"> No</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Total cost Forcasted (€)</label>
+                    <input type="text" value="200">
+                </div>
+                 <div class="form-group">
+                    <label>PG / RO SCM Validation Status</label>
+                    <div class="status-badge pending">
+                        ⏳ Pending Approval Workflow Validation
+                    </div>
+                </div>
+                <!-- <div class="form-group">
+                    <label>Premium Freight Forecast (€)</label>
+                    <input type="text" value="200">
+                </div>
+                <div class="form-group">
+                    <label>Other additional cost (€)</label>
+                    <input type="text" value="300">
+                </div> -->
+            </div>
+
+            <div class="section-header">Risk Assessment Level</div>
+            <div class="risk-warning">Kindly choose the Nature of the alert</div>
+
+            <div class="section-header">Problem Description</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Customer Plant Location(s)</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Customer part number(s)* <small>(Type each Part Number & Press Enter)</small></label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Customer Car or Engine Model(s)</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>VALEO Product Description</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group">
+                    <label>VALEO Finish good(s) part number(s)* <small>(Type each Part Number & Press
+                            Enter)</small></label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>If VALEO is tier 2, Final customer name</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>If VALEO is a tier 2, Final Customer plant location(s)</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Source Flag Picker</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="source" value="supplier"> Supplier Name</label>
+                        <label><input type="radio" name="source" value="out"> Supplier Out Of Panel</label>
+                        <label><input type="radio" name="source" value="manual" checked> Enter manually</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Segment</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Segment Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Commodity</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Commodity Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group full-width">
+                    <label>Missing VALEO material part number(s) <small>(Type each Part Number & Press
+                            Enter)</small></label>
+                    <input type="text">
+                </div>
+                <div class="form-group full-width">
+                    <label>Supplier's manufacturing part number(s) <small>(Type each Part Number & Press
+                            Enter)</small></label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Tier 2 supplier name</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Tier 2 missing material part number(s)</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group full-width">
+                    <label>Is supplier a VALEO site?*</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Supplier VALEO PG</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Supplier VALEO PG Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Supplier VALEO Site</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Supplier VALEO Site Code</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>VALEO line shutdown date*</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>VALEO daily consumption (RM/Day)</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>ETA of next supplier shipment</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Quantity in next shipment</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>APU Manager*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>P1 Project*</label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Project Manager</label>
+                    <input type="text" disabled>
+                </div>
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" disabled>
+                </div>
+            </div>
+
+            <div class="section-header">Transport & Warehouse Support</div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Do you need the support of the Regional Transport and Warehousing team for the transport
+                        acceleration / premium freight solution for this Alert? Support T&W team requested? *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="tw_support" value="yes"> Yes</label>
+                        <label><input type="radio" name="tw_support" value="no" checked> No</label>
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Do you need to track containers (sea freight only)? *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="track_containers" value="yes"> Yes</label>
+                        <label><input type="radio" name="track_containers" value="no" checked> No</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">5W2H</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>What happened ?*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Customer daily consumption (FG/Day)*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Why is it a problem?*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>When customer shutdown may occur(OEM)/Valeo date of delay(OES/IAM)? *</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>When it has been detected ?*</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time">
+                </div>
+                <div class="form-group">
+                    <label>Who has detected it?*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Length of shutdown estimated in cars(OEM)/Number of parts in customer
+                        urgency(OES/IAM)</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Where it has been detected?*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Length of shutdown estimated in days*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>How it has been detected ?*</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Description of the problem</label>
+                    <textarea></textarea>
+                </div>
+            </div>
+
+            <div class="section-header">Quick Response</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Condition to avoid the impending line shutdown</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Immediate action taken</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Condition to restore a normal situation</label>
+                    <input type="text">
+                </div>
+                <div class="form-group">
+                    <label>Crisis team (Names)</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group">
+                    <label>When customer situation may be restored ?*</label>
+                    <input type="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Who can help?</label>
+                    <textarea></textarea>
+                </div>
+            </div>
+
+            <div class="section-header">External Communication</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Information given to customer?*</label>
+                    <select required>
+                        <option value="">--Select--</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>When</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Who is informed ?</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Customer countermeasures to avoid line shutdown</label>
+                    <textarea></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Time</label>
+                    <input type="time">
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <footer>
+        Valeo is an automotive supplier, partner to all automakers worldwide... <br>
+        &copy; 2026 V4-0-1
+    </footer>
+
+    <script>
+        function toggleChargebackBtn() {
+            const chargebackYes = document.querySelector('input[name="chargeback"][value="yes"]');
+            const btnChargeback = document.getElementById('btnChargeback');
+            if (chargebackYes && btnChargeback) {
+                btnChargeback.style.display = chargebackYes.checked ? 'inline-block' : 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

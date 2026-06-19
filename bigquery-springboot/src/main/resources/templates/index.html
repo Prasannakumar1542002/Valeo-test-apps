@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Design tokens ───────────────────────────────────────── */
+        :root {
+            --bg:        #0d1117;
+            --surface:   #161b22;
+            --surface2:  #21262d;
+            --border:    #30363d;
+            --accent:    #58a6ff;
+            --accent2:   #3fb950;
+            --warn:      #f85149;
+            --text:      #e6edf3;
+            --muted:     #8b949e;
+            --mono:      'JetBrains Mono', monospace;
+            --sans:      'DM Sans', sans-serif;
+            --radius:    10px;
+        }
+
+        /* ── Reset ───────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ── Header ──────────────────────────────────────────────── */
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .logo-icon {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #58a6ff 0%, #388bfd 100%);
+            border-radius: 6px;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+        }
+        .logo-name { font-weight: 700; font-size: 1rem; color: var(--text); }
+        .logo-sub  { font-size: .72rem; color: var(--muted); font-family: var(--mono); margin-left: .5rem; }
+
+        .header-chips {
+            margin-left: auto;
+            display: flex;
+            gap: .5rem;
+        }
+        .chip {
+            font-family: var(--mono);
+            font-size: .7rem;
+            padding: .2rem .65rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            background: var(--surface2);
+        }
+        .chip span { color: var(--accent); }
+
+        /* ── Main layout ─────────────────────────────────────────── */
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* ── Panel ───────────────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .75rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .panel-header .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .panel-body { padding: 1.25rem; }
+
+        /* ── SQL editor ──────────────────────────────────────────── */
+        .sql-editor {
+            width: 100%;
+            min-height: 96px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .85rem 1rem;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: .85rem;
+            resize: vertical;
+            transition: border-color .2s, box-shadow .2s;
+            line-height: 1.7;
+        }
+        .sql-editor:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(88,166,255,.12);
+        }
+        .sql-editor::placeholder { color: var(--muted); }
+
+        .btn-row { display: flex; gap: .75rem; align-items: center; margin-top: .75rem; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .5rem 1.1rem;
+            border-radius: 6px;
+            font-size: .85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity .15s, transform .1s;
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-primary { background: var(--accent); color: #0d1117; }
+        .btn-primary:hover { opacity: .88; }
+        .btn-ghost  {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Meta bar ────────────────────────────────────────────── */
+        .meta-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem .75rem;
+            align-items: center;
+            padding: .75rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface2);
+        }
+        .tag {
+            font-family: var(--mono);
+            font-size: .72rem;
+            padding: .2rem .6rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .tag-green  { background: rgba(63,185,80,.15);  color: var(--accent2); }
+        .tag-blue   { background: rgba(88,166,255,.12); color: var(--accent);  }
+        .tag-gray   { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+        /* ── SQL preview block ───────────────────────────────────── */
+        .sql-block {
+            font-family: var(--mono);
+            font-size: .78rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            color: #a5d6ff;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 1rem 1.25rem;
+        }
+
+        /* ── Table ───────────────────────────────────────────────── */
+        .table-scroll {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 430px; /* Constrains height to show ~5 rows before scrolling */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .82rem;
+        }
+        thead {
+            position: sticky;
+            top: 0; /* Sticks to the .table-scroll container instead of the window */
+            z-index: 10;
+        }
+        thead th {
+            background: var(--surface2);
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: .7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: .6rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody tr {
+            border-bottom: 1px solid rgba(48,54,61,.6);
+            transition: background .1s;
+        }
+        tbody tr:hover { background: rgba(88,166,255,.04); }
+        tbody td {
+            padding: .55rem 1rem;
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: var(--mono);
+            font-size: .8rem;
+        }
+        .td-row-num {
+            color: var(--border);
+            font-size: .7rem;
+            user-select: none;
+            width: 48px;
+        }
+        .td-null { color: var(--border); font-style: italic; }
+
+        /* ── Empty / error states ────────────────────────────────── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            gap: 1rem;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 2.5rem; opacity: .3; }
+        .empty-state p { font-size: .9rem; text-align: center; }
+        .empty-state a { color: var(--accent); text-decoration: none; }
+        .empty-state a:hover { text-decoration: underline; }
+
+        .error-banner {
+            display: flex;
+            gap: .75rem;
+            align-items: flex-start;
+            background: rgba(248,81,73,.08);
+            border: 1px solid rgba(248,81,73,.3);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            color: var(--warn);
+            font-size: .875rem;
+        }
+        .error-banner .err-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+
+        /* ── Animations ──────────────────────────────────────────── */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .panel { animation: fadeIn .25s ease both; }
+        .panel:nth-child(2) { animation-delay: .06s; }
+        .panel:nth-child(3) { animation-delay: .12s; }
+
+        /* ── Scrollbar ───────────────────────────────────────────── */
+        ::-webkit-scrollbar       { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<header>
+    <div class="logo">
+        <div class="logo-icon">⬡</div>
+        <span class="logo-name">BigQuery Viewer</span>
+        <span class="logo-sub">Spring Boot POC</span>
+    </div>
+    <div class="header-chips">
+        <div class="chip">project: <span th:text="${projectId}">—</span></div>
+        <div class="chip">dataset: <span th:text="${datasetId}">—</span></div>
+        <div class="chip">table: <span th:text="${tableId}">—</span></div>
+    </div>
+</header>
+
+<main>
+
+    <!-- ── SQL Editor ──────────────────────────────────────────── -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="dot"></div>
+            Query Editor
+        </div>
+        <div class="panel-body">
+            <form method="post" action="/data">
+                <textarea class="sql-editor"
+                          name="customSql"
+                          spellcheck="false"
+                          placeholder="SELECT * FROM `project.dataset.table` LIMIT 50"
+                          th:text="${customSql} ?: (${queryResult != null} ? ${queryResult.executedSql} : '')"></textarea>
+                <div class="btn-row">
+                    <button type="submit" class="btn btn-primary">
+                        ▶&nbsp; Run Query
+                    </button>
+                    <a href="/data" class="btn btn-ghost">↺&nbsp; Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── Error banner ────────────────────────────────────────── -->
+    <div class="error-banner" th:if="${errorMessage}">
+        <span class="err-icon">✕</span>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <!-- ── Results panel ───────────────────────────────────────── -->
+    <div class="panel" th:if="${queryResult}">
+
+        <!-- meta bar -->
+        <div class="meta-bar">
+            <span class="tag tag-green">✓ <span th:text="${queryResult.rowCount}">0</span> rows</span>
+            <span class="tag tag-blue">⏱ <span th:text="${queryResult.elapsedMs}">0</span> ms</span>
+            <span class="tag tag-gray"><span th:text="${#lists.size(queryResult.headers)}">0</span> columns</span>
+        </div>
+
+        <!-- executed SQL -->
+        <div class="sql-block" th:text="${queryResult.executedSql}"></div>
+        <div class="sql-block" style="white-space: pre-wrap; word-break: break-word;" th:text="${#strings.listJoin(queryResult.headers, ', ')}"></div>
+        <!-- table -->
+        <div class="table-scroll" th:if="${not #lists.isEmpty(queryResult.rows)}">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="td-row-num">#</th>
+                        <th th:each="h : ${queryResult.headers}" th:text="${h}"></th>
+                        <script th:inline="javascript">
+                            console.log("headers:", /*[[${queryResult.headers}]]*/ []);
+                        </script>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="row, stat : ${queryResult.rows}">
+                        <script th:inline="javascript">
+                            console.log("Row " + /*[[${stat.count}]]*/ 0 + ":", /*[[${row}]]*/ {});
+                        </script>
+                        <!-- <td th:text="${row}"></th> -->
+                        <td class="td-row-num td-null" th:text="${stat.count}"></td>
+                        <td th:each="h : ${queryResult.headers}">
+                            <span th:text="${row.get(h)}"></span>
+                            <!-- <span th:if="${row[h] == null or row[h] == ''}" class="td-null">NULL</span> -->
+                            <!-- <span  th:text="${row[h]}"></span> -->
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- empty result -->
+        <div class="empty-state" th:if="${#lists.isEmpty(queryResult.rows)}">
+            <div class="icon">◯</div>
+            <p>Query ran successfully but returned no rows.</p>
+        </div>
+
+    </div>
+
+    <!-- ── Landing state (no query yet) ───────────────────────── -->
+    <div class="panel" th:if="${queryResult == null and errorMessage == null}">
+        <div class="empty-state">
+            <div class="icon">⬡</div>
+            <p>
+                Configure <code style="color:var(--accent);font-family:var(--mono)">application.properties</code>
+                with your project, dataset &amp; table,<br>
+                then <a href="/data">load the default table</a> or enter a custom SQL query above.
+            </p>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>
