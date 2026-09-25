@@ -18,3 +18,14 @@ def test_calculate_invalid_type_raises_value_error():
 def test_calculate_second_operand_invalid():
     with pytest.raises(ValueError, match="Inputs must be numeric"):
         calculate(5, [1, 2])
+
+
+def divide(a, b):
+    """
+    Performs safe division with strict numeric validation and zero division checks.
+    """
+    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+        raise ValueError("Inputs must be numeric")
+    if b == 0:
+        raise ZeroDivisionError("Cannot divide by zero")
+    return a / b
