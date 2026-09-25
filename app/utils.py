@@ -6,7 +6,6 @@ def calculate(a, b):
         raise ValueError("Inputs must be numeric")
     return a + b
 
-
 def divide(a, b):
     """
     Performs safe division with strict numeric validation and zero division checks.
