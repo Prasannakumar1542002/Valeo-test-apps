@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /tmp/agentic_sdlc_sandboxes/run_Prasannakumar1542002_Valeo-test-apps_git_4677/.venv
+set -gx VIRTUAL_ENV /tmp/agentic_sdlc_sandboxes/run_Prasannakumar1542002_Valeo-test-apps_git_4580/.venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
