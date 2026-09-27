@@ -1,3 +1,4 @@
+# Calculate the sum of two numbers
 def calculate(a, b):
     """
     Core calculator function with strict numeric type validation.
@@ -6,7 +7,7 @@ def calculate(a, b):
         raise ValueError("Inputs must be numeric")
     return a + b
 
-
+# Perform safe division with strict numeric validation and zero division checks
 def divide(a, b):
     """
     Performs safe division with strict numeric validation and zero division checks.
