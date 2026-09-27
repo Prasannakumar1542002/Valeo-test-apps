@@ -15,3 +15,11 @@ def divide(a, b):
     if b == 0:
         raise ZeroDivisionError("Cannot divide by zero")
     return a / b
+
+# Additional required functions here:
+# - add(a, b)
+# - subtract(a, b)
+# - multiply(a, b)
+# - divide(a, b)
+# - exponent(a, b)
+# - sqrt(a)
