@@ -6,6 +6,7 @@ def calculate(a, b):
         raise ValueError("Inputs must be numeric")
     return a + b
 
+
 def divide(a, b):
     """
     Performs safe division with strict numeric validation and zero division checks.
@@ -15,11 +16,3 @@ def divide(a, b):
     if b == 0:
         raise ZeroDivisionError("Cannot divide by zero")
     return a / b
-
-# Additional required functions here:
-# - add(a, b)
-# - subtract(a, b)
-# - multiply(a, b)
-# - divide(a, b)
-# - exponent(a, b)
-# - sqrt(a)
