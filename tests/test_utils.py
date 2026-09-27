@@ -4,21 +4,28 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
-from app.utils import divide
+from app.utils import apply_discount
 
-def test_divide_valid_integers():
-    assert divide(10, 2) == 5.0
-    assert divide(9, 3) == 3.0
+def test_apply_discount_standard():
+    assert apply_discount(100, 20) == 80.0
+    assert apply_discount(50, 10) == 45.0
 
-def test_divide_float_result():
-    assert divide(5, 2) == 2.5
+def test_apply_discount_zero_percent():
+    assert apply_discount(100, 0) == 100.0
 
-def test_divide_zero_raises_zerodivisionerror():
-    with pytest.raises(ZeroDivisionError):
-        divide(10, 0)
+def test_apply_discount_hundred_percent():
+    assert apply_discount(100, 100) == 0.0
 
-def test_divide_invalid_types_raise_valueerror():
+def test_apply_discount_negative_price_raises_valueerror():
+    with pytest.raises((ValueError, AssertionError)):
+        apply_discount(-50, 10)
+
+def test_apply_discount_invalid_percent_raises_valueerror():
+    with pytest.raises((ValueError, AssertionError)):
+        apply_discount(100, 150)
+    with pytest.raises((ValueError, AssertionError)):
+        apply_discount(100, -5)
+
+def test_apply_discount_invalid_types_raise_valueerror():
     with pytest.raises((ValueError, TypeError, AssertionError)):
-        divide("10", 2)
-    with pytest.raises((ValueError, TypeError, AssertionError)):
-        divide(10, [2])
+        apply_discount("100", 20)

@@ -17,3 +17,17 @@ def divide(a, b):
     if b == 0:
         raise ZeroDivisionError("Cannot divide by zero")
     return a / b
+
+
+def apply_discount(price, discount_percent):
+    """
+    Calculates the discounted price with validation for price and percentage range.
+    """
+    if not isinstance(price, (int, float)) or not isinstance(discount_percent, (int, float)):
+        raise ValueError("Inputs must be numeric")
+    if price < 0:
+        raise ValueError("Price cannot be negative")
+    if discount_percent < 0 or discount_percent > 100:
+        raise ValueError("Discount must be between 0 and 100")
+    discounted = price * (1 - discount_percent / 100)
+    return round(discounted, 2)
