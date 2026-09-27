@@ -1,4 +1,3 @@
-import math
 from decimal import Decimal, ROUND_HALF_UP
 
 def calculate(a, b):
