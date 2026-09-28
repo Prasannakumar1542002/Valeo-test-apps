@@ -1,47 +1,31 @@
-def calculate(a, b):
-    """
-    Core calculator function with strict numeric type validation.
-    """
-    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-        raise ValueError("Inputs must be numeric")
-    return a + b
+class CircularDependencyError(Exception): pass
 
-def divide(a, b):
-    """
-    Performs safe division with strict numeric validation and zero division checks.
-    """
-    if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-        raise ValueError("Inputs must be numeric")
-    if b == 0:
-        raise ZeroDivisionError("Cannot divide by zero")
-    return a / b
+class DependencyResolver:
+    def __init__(self):
+        self.graph = {}
 
-def apply_discount(price, discount_percent):
-    """
-    Applies a discount to a given price.
+    def add_dependency(self, task, depends_on):
+        if not isinstance(task, str) or not isinstance(depends_on, str) or not task or not depends_on:
+            raise ValueError("Task names must be non-empty strings")
+        if task == depends_on:
+            raise ValueError("Task cannot depend on itself")
+        if task not in self.graph:
+            self.graph[task] = set()
+        if depends_on not in self.graph:
+            self.graph[depends_on] = set()
+        self.graph[task].add(depends_on)
 
-    Args:
-        price (int or float): The original price.
-        discount_percent (int or float): The discount percentage (0-100).
-
-    Returns:
-        float: The final discounted price, rounded to 2 decimal places.
-
-    Raises:
-        ValueError:
-            - If inputs are not numeric.
-            - If price is negative.
-            - If discount_percent is not between 0 and 100.
-    """
-    if not isinstance(price, (int, float)) or not isinstance(discount_percent, (int, float)):
-        raise ValueError("Inputs must be numeric")
-
-    if price < 0:
-        raise ValueError("Price cannot be negative")
-
-    if not (0 <= discount_percent <= 100):
-        raise ValueError("Discount must be between 0 and 100")
-
-    discount_factor = 1 - (discount_percent / 100)
-    discounted_price = price * discount_factor
-    return round(discounted_price, 2)
+    def resolve_execution_order(self):
+        remaining = {node: set(deps) for node, deps in self.graph.items()}
+        result = []
+        while remaining:
+            batch = sorted([node for node, deps in remaining.items() if not deps])
+            if not batch:
+                raise CircularDependencyError("Circular dependency detected")
+            result.append(batch)
+            for node in batch:
+                del remaining[node]
+            for deps in remaining.values():
+                for node in batch:
+                    deps.discard(node)
+        return result

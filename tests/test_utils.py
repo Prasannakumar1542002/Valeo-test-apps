@@ -5,63 +5,54 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pytest
 
 import pytest
-from app.utils import apply_discount
+from app.utils import DependencyResolver, CircularDependencyError
 
-def test_apply_discount_zero_percent():
-    """Test apply_discount with 0% discount."""
-    assert apply_discount(100, 0) == 100.00
-    assert apply_discount(50.50, 0) == 50.50
+def test_add_dependency_validation():
+    resolver = DependencyResolver()
+    with pytest.raises(ValueError, match="Task names must be non-empty strings"):
+        resolver.add_dependency("", "B")
+    with pytest.raises(ValueError, match="Task names must be non-empty strings"):
+        resolver.add_dependency("A", 123)
+    with pytest.raises(ValueError, match="Task cannot depend on itself"):
+        resolver.add_dependency("A", "A")
 
-def test_apply_discount_fifty_percent():
-    """Test apply_discount with 50% discount."""
-    assert apply_discount(100, 50) == 50.00
-    assert apply_discount(200.00, 50) == 100.00
-    assert apply_discount(75.00, 50) == 37.50
+def test_independent_tasks():
+    resolver = DependencyResolver()
+    resolver.add_dependency("B", "A")
+    resolver.add_dependency("C", "D")
+    # A and D have no dependencies, B depends on A, C depends on D
+    # Batch 1: A, D; Batch 2: B, C
+    order = resolver.resolve_execution_order()
+    assert order == [["A", "D"], ["B", "C"]]
 
-def test_apply_discount_hundred_percent():
-    """Test apply_discount with 100% discount."""
-    assert apply_discount(100, 100) == 0.00
-    assert apply_discount(50.75, 100) == 0.00
+def test_linear_chain():
+    resolver = DependencyResolver()
+    resolver.add_dependency("C", "B")
+    resolver.add_dependency("B", "A")
+    order = resolver.resolve_execution_order()
+    assert order == [["A"], ["B"], ["C"]]
 
-def test_apply_discount_other_valid_percentages():
-    """Test apply_discount with other valid discount percentages and various prices."""
-    assert apply_discount(200, 10) == 180.00
-    assert apply_discount(150, 25) == 112.50
-    assert apply_discount(100.00, 75) == 25.00
-    assert apply_discount(10.00, 12.5) == 8.75
-    assert apply_discount(33.33, 33.33) == pytest.approx(22.22)
+def test_diamond_graph():
+    resolver = DependencyResolver()
+    resolver.add_dependency("B", "A")
+    resolver.add_dependency("C", "A")
+    resolver.add_dependency("D", "B")
+    resolver.add_dependency("D", "C")
+    order = resolver.resolve_execution_order()
+    assert order == [["A"], ["B", "C"], ["D"]]
 
-def test_apply_discount_non_numeric_price_raises_error():
-    """Test that apply_discount raises ValueError for non-numeric price."""
-    with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount("abc", 10)
-    with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount(None, 10)
+def test_circular_dependency():
+    resolver = DependencyResolver()
+    resolver.add_dependency("A", "B")
+    resolver.add_dependency("B", "C")
+    resolver.add_dependency("C", "A")
+    with pytest.raises(CircularDependencyError, match="Circular dependency detected"):
+        resolver.resolve_execution_order()
 
-def test_apply_discount_non_numeric_discount_raises_error():
-    """Test that apply_discount raises ValueError for non-numeric discount_percent."""
-    with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount(100, "xyz")
-    with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount(100, [10])
-
-def test_apply_discount_negative_price_raises_error():
-    """Test that apply_discount raises ValueError for negative price."""
-    with pytest.raises(ValueError, match="Price cannot be negative"):
-        apply_discount(-10, 10)
-    with pytest.raises(ValueError, match="Price cannot be negative"):
-        apply_discount(-0.01, 50)
-
-def test_apply_discount_discount_less_than_zero_raises_error():
-    """Test that apply_discount raises ValueError for discount_percent less than 0."""
-    with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(100, -1)
-    with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(50, -0.01)
-
-def test_apply_discount_discount_greater_than_hundred_raises_error():
-    """Test that apply_discount raises ValueError for discount_percent greater than 100."""
-    with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(100, 101)
-    with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(50, 100.01)
+def test_complex_graph():
+    resolver = DependencyResolver()
+    resolver.add_dependency("Task3", "Task1")
+    resolver.add_dependency("Task3", "Task2")
+    resolver.add_dependency("Task2", "Task1")
+    order = resolver.resolve_execution_order()
+    assert order == [["Task1"], ["Task2"], ["Task3"]]
