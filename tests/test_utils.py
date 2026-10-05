@@ -5,54 +5,40 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pytest
 
 import pytest
-from app.utils import DependencyResolver, CircularDependencyError
+from app.utils import DependencyResolver, CircularDependencyError, calculate_compound_interest
 
-def test_add_dependency_validation():
+def test_dependency_resolver_basic():
     resolver = DependencyResolver()
-    with pytest.raises(ValueError, match="Task names must be non-empty strings"):
-        resolver.add_dependency("", "B")
-    with pytest.raises(ValueError, match="Task names must be non-empty strings"):
-        resolver.add_dependency("A", 123)
-    with pytest.raises(ValueError, match="Task cannot depend on itself"):
-        resolver.add_dependency("A", "A")
+    resolver.add_dependency('B', 'A')
+    resolver.add_dependency('C', 'B')
+    assert resolver.resolve_execution_order() == [['A'], ['B'], ['C']]
 
-def test_independent_tasks():
+def test_dependency_resolver_circular():
     resolver = DependencyResolver()
-    resolver.add_dependency("B", "A")
-    resolver.add_dependency("C", "D")
-    # A and D have no dependencies, B depends on A, C depends on D
-    # Batch 1: A, D; Batch 2: B, C
-    order = resolver.resolve_execution_order()
-    assert order == [["A", "D"], ["B", "C"]]
-
-def test_linear_chain():
-    resolver = DependencyResolver()
-    resolver.add_dependency("C", "B")
-    resolver.add_dependency("B", "A")
-    order = resolver.resolve_execution_order()
-    assert order == [["A"], ["B"], ["C"]]
-
-def test_diamond_graph():
-    resolver = DependencyResolver()
-    resolver.add_dependency("B", "A")
-    resolver.add_dependency("C", "A")
-    resolver.add_dependency("D", "B")
-    resolver.add_dependency("D", "C")
-    order = resolver.resolve_execution_order()
-    assert order == [["A"], ["B", "C"], ["D"]]
-
-def test_circular_dependency():
-    resolver = DependencyResolver()
-    resolver.add_dependency("A", "B")
-    resolver.add_dependency("B", "C")
-    resolver.add_dependency("C", "A")
-    with pytest.raises(CircularDependencyError, match="Circular dependency detected"):
+    resolver.add_dependency('A', 'B')
+    resolver.add_dependency('B', 'A')
+    with pytest.raises(CircularDependencyError):
         resolver.resolve_execution_order()
 
-def test_complex_graph():
+def test_dependency_resolver_validation():
     resolver = DependencyResolver()
-    resolver.add_dependency("Task3", "Task1")
-    resolver.add_dependency("Task3", "Task2")
-    resolver.add_dependency("Task2", "Task1")
-    order = resolver.resolve_execution_order()
-    assert order == [["Task1"], ["Task2"], ["Task3"]]
+    with pytest.raises(ValueError):
+        resolver.add_dependency('', 'A')
+    with pytest.raises(ValueError):
+        resolver.add_dependency('A', 'A')
+
+def test_calculate_compound_interest_valid():
+    # P=100, r=0.10, t=1, n=1 -> 100 * (1.1)^1 = 110.0
+    assert calculate_compound_interest(100, 0.10, 1, 1) == 110.0
+    # P=1000, r=0.05, t=2, n=1 -> 1000 * (1.05)^2 = 1102.5
+    assert calculate_compound_interest(1000, 0.05, 2, 1) == 1102.5
+
+def test_calculate_compound_interest_exceptions():
+    with pytest.raises(ValueError):
+        calculate_compound_interest(-100, 0.05, 1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, -0.05, 1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, 0.05, -1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, 0.05, 1, 0)

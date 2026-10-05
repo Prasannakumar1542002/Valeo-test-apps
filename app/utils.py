@@ -29,3 +29,10 @@ class DependencyResolver:
                 for node in batch:
                     deps.discard(node)
         return result
+
+def calculate_compound_interest(principal, rate, time, n=1):
+    """Calculates compound interest: A = P(1 + r/n)^(nt)"""
+    if principal < 0 or rate < 0 or time < 0 or n <= 0:
+        raise ValueError("All inputs must be non-negative, and n must be positive.")
+    amount = principal * (1 + (rate / n)) ** (n * time)
+    return round(amount, 2)
