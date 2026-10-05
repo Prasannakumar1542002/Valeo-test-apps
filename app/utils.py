@@ -36,3 +36,10 @@ def calculate_compound_interest(principal, rate, time, n=1):
         raise ValueError("All inputs must be non-negative, and n must be positive.")
     amount = principal * (1 + (rate / n)) ** (n * time)
     return round(amount, 2)
+
+def calculate_water_hardness(calcium_mg_l, magnesium_mg_l):
+    """Calculates water hardness in mg/L as CaCO3 using the formula: 2.497 * [Ca] + 4.118 * [Mg]"""
+    if calcium_mg_l < 0 or magnesium_mg_l < 0:
+        raise ValueError("Concentrations must be non-negative.")
+    hardness = (2.497 * calcium_mg_l) + (4.118 * magnesium_mg_l)
+    return round(hardness, 2)

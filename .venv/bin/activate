@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV=/tmp/agentic_sdlc_sandboxes/run_Prasannakumar1542002_Valeo-test-apps_git_1568/.venv
+VIRTUAL_ENV=/tmp/agentic_sdlc_sandboxes/run_Prasannakumar1542002_Valeo-test-apps_git_8343/.venv
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

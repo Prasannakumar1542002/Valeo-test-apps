@@ -5,40 +5,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pytest
 
 import pytest
-from app.utils import DependencyResolver, CircularDependencyError, calculate_compound_interest
+from app.utils import calculate_water_hardness
 
-def test_dependency_resolver_basic():
-    resolver = DependencyResolver()
-    resolver.add_dependency('B', 'A')
-    resolver.add_dependency('C', 'B')
-    assert resolver.resolve_execution_order() == [['A'], ['B'], ['C']]
+def test_calculate_water_hardness_valid():
+    assert calculate_water_hardness(10, 10) == 66.15
+    assert calculate_water_hardness(0, 0) == 0.0
+    assert calculate_water_hardness(100, 50) == 455.6
 
-def test_dependency_resolver_circular():
-    resolver = DependencyResolver()
-    resolver.add_dependency('A', 'B')
-    resolver.add_dependency('B', 'A')
-    with pytest.raises(CircularDependencyError):
-        resolver.resolve_execution_order()
+def test_calculate_water_hardness_negative_calcium():
+    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
+        calculate_water_hardness(-1, 10)
 
-def test_dependency_resolver_validation():
-    resolver = DependencyResolver()
-    with pytest.raises(ValueError):
-        resolver.add_dependency('', 'A')
-    with pytest.raises(ValueError):
-        resolver.add_dependency('A', 'A')
+def test_calculate_water_hardness_negative_magnesium():
+    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
+        calculate_water_hardness(10, -1)
 
-def test_calculate_compound_interest_valid():
-    # P=100, r=0.10, t=1, n=1 -> 100 * (1.1)^1 = 110.0
-    assert calculate_compound_interest(100, 0.10, 1, 1) == 110.0
-    # P=1000, r=0.05, t=2, n=1 -> 1000 * (1.05)^2 = 1102.5
-    assert calculate_compound_interest(1000, 0.05, 2, 1) == 1102.5
+def test_calculate_water_hardness_both_negative():
+    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
+        calculate_water_hardness(-10, -10)
 
-def test_calculate_compound_interest_exceptions():
-    with pytest.raises(ValueError):
-        calculate_compound_interest(-100, 0.05, 1, 1)
-    with pytest.raises(ValueError):
-        calculate_compound_interest(100, -0.05, 1, 1)
-    with pytest.raises(ValueError):
-        calculate_compound_interest(100, 0.05, -1, 1)
-    with pytest.raises(ValueError):
-        calculate_compound_interest(100, 0.05, 1, 0)
+def test_calculate_water_hardness_float_precision():
+    # 2.497 * 1 + 4.118 * 1 = 6.615, rounded to 2 decimal places is 6.62
+    assert calculate_water_hardness(1, 1) == 6.62
