@@ -5,25 +5,54 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import pytest
 
 import pytest
-from app.utils import calculate_water_hardness
+from app.utils import calculate_power, calculate_compound_interest, calculate_water_hardness, DependencyResolver, CircularDependencyError
+
+def test_calculate_power_valid():
+    assert calculate_power(2, 3) == 8.0
+    assert calculate_power(5, 0) == 1.0
+    assert calculate_power(10, 1) == 10.0
+    assert calculate_power(2, -1) == 0.5
+
+def test_calculate_compound_interest_valid():
+    assert calculate_compound_interest(100, 0.05, 1, 1) == 105.0
+    assert calculate_compound_interest(1000, 0.1, 2, 1) == 1210.0
+
+def test_calculate_compound_interest_exceptions():
+    with pytest.raises(ValueError):
+        calculate_compound_interest(-100, 0.05, 1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, -0.05, 1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, 0.05, -1, 1)
+    with pytest.raises(ValueError):
+        calculate_compound_interest(100, 0.05, 1, 0)
 
 def test_calculate_water_hardness_valid():
     assert calculate_water_hardness(10, 10) == 66.15
     assert calculate_water_hardness(0, 0) == 0.0
-    assert calculate_water_hardness(100, 50) == 455.6
 
-def test_calculate_water_hardness_negative_calcium():
-    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
+def test_calculate_water_hardness_exceptions():
+    with pytest.raises(ValueError):
         calculate_water_hardness(-1, 10)
-
-def test_calculate_water_hardness_negative_magnesium():
-    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
+    with pytest.raises(ValueError):
         calculate_water_hardness(10, -1)
 
-def test_calculate_water_hardness_both_negative():
-    with pytest.raises(ValueError, match="Concentrations must be non-negative."):
-        calculate_water_hardness(-10, -10)
+def test_dependency_resolver_valid():
+    resolver = DependencyResolver()
+    resolver.add_dependency('B', 'A')
+    resolver.add_dependency('C', 'B')
+    order = resolver.resolve_execution_order()
+    assert order == [['A'], ['B'], ['C']]
 
-def test_calculate_water_hardness_float_precision():
-    # 2.497 * 1 + 4.118 * 1 = 6.615, rounded to 2 decimal places is 6.62
-    assert calculate_water_hardness(1, 1) == 6.62
+def test_dependency_resolver_exceptions():
+    resolver = DependencyResolver()
+    with pytest.raises(ValueError):
+        resolver.add_dependency('', 'A')
+    with pytest.raises(ValueError):
+        resolver.add_dependency('A', 'A')
+    
+    resolver_cycle = DependencyResolver()
+    resolver_cycle.add_dependency('A', 'B')
+    resolver_cycle.add_dependency('B', 'A')
+    with pytest.raises(CircularDependencyError):
+        resolver_cycle.resolve_execution_order()

@@ -30,6 +30,10 @@ class DependencyResolver:
                     deps.discard(node)
         return result
 
+def calculate_power(base, exponent):
+    """Calculates the power of a number: base^exponent"""
+    return float(base ** exponent)
+
 def calculate_compound_interest(principal, rate, time, n=1):
     """Calculates compound interest: A = P(1 + r/n)^(nt)"""
     if principal < 0 or rate < 0 or time < 0 or n <= 0:
