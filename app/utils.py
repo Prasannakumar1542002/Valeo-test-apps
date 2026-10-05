@@ -47,3 +47,9 @@ def calculate_water_hardness(calcium_mg_l, magnesium_mg_l):
         raise ValueError("Concentrations must be non-negative.")
     hardness = (2.497 * calcium_mg_l) + (4.118 * magnesium_mg_l)
     return round(hardness, 2)
+
+def calculate_income_tax(income, tax_rate):
+    """Calculates income tax based on a flat rate."""
+    if income < 0 or tax_rate < 0 or tax_rate > 1:
+        raise ValueError("Income must be non-negative and tax rate must be between 0 and 1.")
+    return round(income * tax_rate, 2)
