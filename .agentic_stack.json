@@ -1,0 +1,12 @@
+{
+  "language": "python",
+  "tech_stack": "Python with Pytest",
+  "test_framework": "pytest",
+  "install_commands": [
+    "pip install -r requirements.txt"
+  ],
+  "test_command": "pytest",
+  "test_file_pattern": "tests/test_{name}.py",
+  "test_fail_regex": "(\\d+) failed",
+  "test_pass_regex": "(\\d+) passed"
+}

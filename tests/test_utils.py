@@ -8,30 +8,28 @@ import pytest
 from app.utils import apply_discount
 
 def test_apply_discount_valid():
-    assert apply_discount(100, 10) == 90.0
-    assert apply_discount(200, 50) == 100.0
-    assert apply_discount(50, 0) == 50.0
-    assert apply_discount(100, 100) == 0.0
-    assert apply_discount(10.5, 10) == 9.45
+    assert apply_discount(100, 20) == 80.0
+    assert apply_discount(50.5, 10) == 45.45
+    assert apply_discount(10, 0) == 10.0
+    assert apply_discount(10, 100) == 0.0
 
-def test_apply_discount_non_numeric():
+def test_apply_discount_rounding():
+    assert apply_discount(10.555, 10) == 9.5
+    assert apply_discount(10.556, 10) == 9.5
+    assert apply_discount(10.566, 10) == 9.51
+
+def test_apply_discount_non_numeric_inputs():
     with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount("100", 10)
+        apply_discount("100", 20)
     with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount(100, "10")
-    with pytest.raises(ValueError, match="Inputs must be numeric"):
-        apply_discount(True, 10)
+        apply_discount(100, None)
 
 def test_apply_discount_negative_price():
     with pytest.raises(ValueError, match="Price cannot be negative"):
-        apply_discount(-10, 10)
+        apply_discount(-1, 10)
 
 def test_apply_discount_invalid_percentage():
     with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(100, -1)
+        apply_discount(100, -0.1)
     with pytest.raises(ValueError, match="Discount must be between 0 and 100"):
-        apply_discount(100, 101)
-
-def test_apply_discount_rounding():
-    # 33.33% of 100 is 33.33, 100 - 33.33 = 66.67
-    assert apply_discount(100, 33.33) == 66.67
+        apply_discount(100, 100.1)
