@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Report · Executive Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/sweetalert2.all.min.js"></script>
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="top">
+    <div class="top-brand">
+      <div class="logo-badge">DR</div>
+      <h2>Daily Report</h2>
+    </div>
+    <div class="r">
+      <span id="who" class="badge"></span>
+      <a id="adminLink" href="/register" class="btn btn-sm" style="display:none;">⚙️ Register User</a>
+      <button class="ghost btn-sm" id="out" title="Sign out of account">Logout</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Print-only Document Header -->
+    <div class="print-only-header" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #ea580c; padding-bottom: 8px; margin-bottom: 14px;">
+        <div>
+          <h1 style="margin: 0; font-size: 20px; font-weight: 800; color: #000; letter-spacing: 1px;">DAILY REPORT</h1>
+          <div style="font-size: 11px; color: #555;">Daily Sales & Balance Statement</div>
+        </div>
+        <div style="text-align: right; font-size: 11px; color: #555;">
+          <div>Generated on: <span id="printTimestamp"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Executive Metrics Cards -->
+    <section class="stats-grid" aria-label="Summary statistics">
+      <div class="stat-card">
+        <span class="stat-label">Total Quantity (Qty)</span>
+        <span class="stat-value num" id="statQty">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total T. Rate (₹)</span>
+        <span class="stat-value num" id="statGross">₹0.00</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Win (₹)</span>
+        <span class="stat-value num" id="statWin">₹0.00</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Balance (₹)</span>
+        <span class="stat-value num positive" id="statBal">₹0.00</span>
+      </div>
+    </section>
+
+    <!-- Meta and Search Card -->
+    <section class="meta-panel">
+      <!-- Search Past Reports Field -->
+      <div class="report-search-bar">
+        <div class="report-search-input-wrap">
+          <label for="searchReports">🔍 View Previously Created Reports (Search by Date, ID, Name, Ticket)</label>
+          <input id="searchReports" type="text" placeholder="Type Date (YYYY-MM-DD), Report ID, Name, or Ticket..." autocomplete="off">
+          <div id="searchDropdown" class="report-search-dropdown"></div>
+        </div>
+        <button class="ghost" id="btnBrowseReports" type="button">📂 Browse All Saved Reports</button>
+      </div>
+
+      <!-- Report Metadata & Date Selection with Available Dates Calendar -->
+      <div class="meta-grid">
+        <div class="meta-item">
+          <label for="rid">Report ID <span style="color: var(--bad); font-weight: 900;" title="Required">*</span></label>
+          <input id="rid" placeholder="Enter Report ID" autocomplete="off" required>
+        </div>
+        <div class="meta-item">
+          <label for="rname">Report / Counter Name <span style="color: var(--bad); font-weight: 900;" title="Required">*</span></label>
+          <input id="rname" placeholder="Enter Report / Counter Name" autocomplete="off" required>
+        </div>
+        <div class="meta-item">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label for="dateDisplayVal">Report Date <span style="color: var(--bad); font-weight: 900;" title="Required">*</span></label>
+            <span id="reportModeTag" style=" font-size: 11px; font-weight: 700; color: var(--pri-hover);"></span>
+          </div>
+          <div class="date-picker-wrap">
+            <button type="button" id="datePickerBtn" class="date-display-btn">
+              <span id="dateDisplayVal">Select Available Date</span>
+              <span style="font-size: 14px;">📅</span>
+            </button>
+            <input type="hidden" id="rdate">
+
+            <!-- Interactive Calendar Popover with Saved Date Disabling -->
+            <div id="calPopover" class="cal-popover">
+              <div class="cal-header">
+                <button type="button" id="calPrev" class="cal-nav-btn" title="Previous Month">‹</button>
+                <span id="calMonthYear" class="cal-title"></span>
+                <button type="button" id="calNext" class="cal-nav-btn" title="Next Month">›</button>
+              </div>
+              <div class="cal-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div id="calDaysGrid" class="cal-days-grid"></div>
+              <div class="cal-legend">
+                <div class="cal-legend-item">
+                  <span class="cal-dot-avail"></span>
+                  <span>Available</span>
+                </div>
+                <div class="cal-legend-item">
+                  <span class="cal-dot-saved"></span>
+                  <span>Saved (Disabled)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Toolbar -->
+    <div class="bar">
+      <div class="bar-left">
+        <button class="btn btn-secondary" id="btnNewReport" type="button" title="Start a fresh report for an available date">
+          ✨ + New Report
+        </button>
+        <button class="ghost" id="add">+ Add Row</button>
+        <div class="ticket-filter-box">
+          <span class="search-icon">🔍</span>
+          <input id="tblSearch" type="text" placeholder="Filter tickets in table..." autocomplete="off">
+          <button id="clearTblSearch" class="clear-btn" type="button" title="Clear filter">✕</button>
+        </div>
+        <span id="filter-count"></span>
+      </div>
+      <div class="bar-right">
+        <span id="status" style="display:none;"></span>
+        <button class="ghost" id="btnPrint" type="button" title="Print this report (Ctrl+P)">🖨️ Print</button>
+        <button class="ghost" id="btnExport" type="button" title="Download as Excel spreadsheet">📥 Export Excel</button>
+        <button class="btn" id="save" title="Save changes (Ctrl+S)">💾 Save Report</button>
+      </div>
+    </div>
+
+    <!-- Data Table Container -->
+    <div class="tbl">
+      <table>
+        <colgroup>
+          <col style="width: 22%;">
+          <col style="width: 13%;">
+          <col style="width: 13%;">
+          <col style="width: 16%;">
+          <col style="width: 14%;">
+          <col style="width: 16%;">
+          <col style="width: 6%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Rate (₹)</th>
+            <th>Qty</th>
+            <th>T.Rate (₹)</th>
+            <th>Win (₹)</th>
+            <th>Balance (₹)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+        <tfoot>
+          <tr>
+            <td class="l">Total</td>
+            <td></td>
+            <td id="tq" class="num">0</td>
+            <td id="tt" class="num">0.00</td>
+            <td id="tw" class="num">0.00</td>
+            <td id="tbal" class="num">0.00</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </main>
+
+  <!-- Saved Reports Modal -->
+  <div id="reportsModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Saved Reports Directory</h3>
+        <button class="ghost btn-sm" id="closeModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <input id="modalSearchInput" type="text" placeholder="Filter reports list by ID, Name, or Date..." style="margin-bottom: 14px;">
+        <div id="savedReportsList" class="saved-reports-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const n = v => +(+v || 0).toFixed(2);
+    const f = v => n(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fInt = v => Math.round(+v || 0).toLocaleString('en-IN');
+
+    // No hardcoded demo data: starts completely empty as requested
+    let rows = [];
+    let savedReportsCache = [];
+    let isViewingSavedReport = false;
+    let loadedOriginalId = null;
+    let loadedOriginalDate = null;
+
+    // Calendar state
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth(); // 0-based
+
+    const setStatus = (t, c) => {
+      $('status').textContent = t;
+      $('status').className = c || '';
+    };
+    const dirty = () => setStatus('● Unsaved changes', 'dirty');
+
+    // Helper: Composite key and blocked dates for a specific report ID
+    function getCompositeKey(id, date) {
+      return `${String(id || '').trim().toLowerCase()}|${String(date || '').trim()}`;
+    }
+
+    function getBlockedDatesForCurrentId() {
+      const currentId = String($('rid').value || '').trim().toLowerCase();
+      if (!currentId) return new Set();
+      const dates = savedReportsCache
+        .filter(r => {
+          const matchesId = String(r.id || '').trim().toLowerCase() === currentId;
+          // If editing an existing report, allow keeping its original date
+          const isSelf = loadedOriginalId && loadedOriginalDate &&
+            String(loadedOriginalId).trim().toLowerCase() === currentId &&
+            r.date === loadedOriginalDate;
+          return matchesId && !isSelf;
+        })
+        .map(r => r.date);
+      return new Set(dates);
+    }
+
+    function totals() {
+      let q = 0, t = 0, w = 0;
+      rows.forEach(r => {
+        q += +r.qty || 0;
+        t += n(r.rate * r.qty);
+        w += +r.win || 0;
+      });
+
+      const bal = t - w;
+      
+      // Update Table Footer
+      $('tq').textContent = fInt(q);
+      $('tt').textContent = f(t);
+      $('tw').textContent = f(w);
+      const b = $('tbal');
+      b.textContent = f(bal);
+      b.style.color = bal < 0 ? 'var(--bad)' : 'var(--ok)';
+
+      // Update Executive Metric Cards
+      $('statQty').textContent = fInt(q);
+      $('statGross').textContent = '₹' + f(t);
+      $('statWin').textContent = '₹' + f(w);
+      const statBal = $('statBal');
+      statBal.textContent = (bal < 0 ? '-₹' : '₹') + f(Math.abs(bal));
+      statBal.className = 'stat-value num ' + (bal < 0 ? 'negative' : 'positive');
+    }
+
+    function calc(i) {
+      const r = rows[i];
+      const tr = document.querySelector(`#tb tr[data-i="${i}"]`);
+      if (!tr) return;
+      const t = n(r.rate * r.qty);
+      const b = n(t - r.win);
+      tr.querySelector('.tr').value = f(t);
+      const bi = tr.querySelector('.bal');
+      bi.value = f(b);
+      bi.classList.toggle('neg', b < 0);
+    }
+
+    function render() {
+      const tbody = $('tb');
+      tbody.innerHTML = '';
+      const filter = $('tblSearch').value.trim().toLowerCase();
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-table-placeholder">
+                <div class="icon">📋</div>
+                <div class="title">No tickets in this report</div>
+                <p style="font-size:12px;margin:0 0 14px 0;">This report is empty. Click below or press Enter to add tickets.</p>
+                <button type="button" class="btn btn-sm" id="btnEmptyAdd">+ Add Row</button>
+              </div>
+            </td>
+          </tr>
+        `;
+        $('btnEmptyAdd').onclick = () => $('add').click();
+        updateFilterStatus(0);
+        totals();
+        return;
+      }
+
+      let visibleCount = 0;
+      rows.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.dataset.i = i;
+        const matches = !filter || String(r.ticket || '').toLowerCase().includes(filter);
+        if (!matches) {
+          tr.classList.add('hidden');
+        } else {
+          visibleCount++;
+        }
+
+        tr.innerHTML = `
+          <td><input data-k="ticket" value="" placeholder="Ticket name"></td>
+          <td><input data-k="rate" type="number" step="any" placeholder="0"></td>
+          <td><input data-k="qty" type="number" step="any" placeholder="0"></td>
+          <td><input class="tr" disabled tabindex="-1"></td>
+          <td><input data-k="win" type="number" step="any" placeholder="0"></td>
+          <td><input class="bal" disabled tabindex="-1"></td>
+          <td><button class="del" type="button" title="Delete row">✕</button></td>
+        `;
+
+        tr.querySelectorAll('input[data-k]').forEach(inp => {
+          inp.value = r[inp.dataset.k];
+        });
+
+        tbody.appendChild(tr);
+        calc(i);
+      });
+
+      updateFilterStatus(visibleCount);
+      totals();
+    }
+
+    function updateFilterStatus(visibleCount) {
+      const filter = $('tblSearch').value.trim();
+      const countEl = $('filter-count');
+      const clearBtn = $('clearTblSearch');
+      if (filter) {
+        clearBtn.style.display = 'block';
+        countEl.textContent = `(Showing ${visibleCount} of ${rows.length})`;
+      } else {
+        clearBtn.style.display = 'none';
+        countEl.textContent = '';
+      }
+    }
+
+    // Real-time table filter
+    $('tblSearch').addEventListener('input', () => {
+      const filter = $('tblSearch').value.trim().toLowerCase();
+      let visibleCount = 0;
+      document.querySelectorAll('#tb tr').forEach(tr => {
+        const i = +tr.dataset.i;
+        const ticket = String(rows[i]?.ticket || '').toLowerCase();
+        const matches = !filter || ticket.includes(filter);
+        tr.classList.toggle('hidden', !matches);
+        if (matches) visibleCount++;
+      });
+      updateFilterStatus(visibleCount);
+    });
+
+    $('clearTblSearch').addEventListener('click', () => {
+      $('tblSearch').value = '';
+      $('tblSearch').focus();
+      document.querySelectorAll('#tb tr').forEach(tr => tr.classList.remove('hidden'));
+      updateFilterStatus(rows.length);
+    });
+
+    // Table input handling
+    $('tb').addEventListener('input', e => {
+      const inp = e.target;
+      const k = inp.dataset.k;
+      if (!k) return;
+      const i = +inp.closest('tr').dataset.i;
+      rows[i][k] = k === 'ticket' ? inp.value : (parseFloat(inp.value) || 0);
+      calc(i);
+      totals();
+      dirty();
+    });
+
+    $('tb').addEventListener('click', e => {
+      if (!e.target.classList.contains('del')) return;
+      const i = +e.target.closest('tr').dataset.i;
+      rows.splice(i, 1);
+      render();
+      dirty();
+    });
+
+    // Enter key handling: pressing Enter in the last input box creates a new row
+    $('tb').addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const inp = e.target;
+      const k = inp.dataset.k;
+      if (!k) return;
+      const tr = inp.closest('tr');
+      if (!tr) return;
+      const i = +tr.dataset.i;
+
+      e.preventDefault();
+
+      if (k === 'win') {
+        // Last editable input box in the row
+        if (i === rows.length - 1) {
+          // Last row in the table: create a new row!
+          $('add').click();
+        } else {
+          // Earlier row: move to next row's ticket input
+          const nextTr = document.querySelector(`#tb tr[data-i="${i + 1}"]`);
+          if (nextTr) {
+            const nextInp = nextTr.querySelector('input[data-k="ticket"]');
+            if (nextInp) {
+              nextInp.focus();
+              nextInp.select?.();
+            }
+          }
+        }
+      } else if (k === 'ticket') {
+        const next = tr.querySelector('input[data-k="rate"]');
+        if (next) { next.focus(); next.select?.(); }
+      } else if (k === 'rate') {
+        const next = tr.querySelector('input[data-k="qty"]');
+        if (next) { next.focus(); next.select?.(); }
+      } else if (k === 'qty') {
+        const next = tr.querySelector('input[data-k="win"]');
+        if (next) { next.focus(); next.select?.(); }
+      }
+    });
+
+    $('add').onclick = () => {
+      rows.push({ ticket: '', rate: 0, qty: 0, win: 0 });
+      if ($('tblSearch').value) {
+        $('tblSearch').value = '';
+      }
+      render();
+      dirty();
+      const tbl = document.querySelector('.tbl');
+      if (tbl) {
+        tbl.scrollTop = tbl.scrollHeight;
+      }
+      const last = $('tb').lastElementChild;
+      if (last) {
+        const firstInp = last.querySelector('input');
+        if (firstInp) {
+          firstInp.focus({ preventScroll: true });
+          firstInp.select?.();
+        }
+      }
+    };
+
+    // When Report ID changes, update date blocking for this Report ID
+    $('rid').addEventListener('input', () => {
+      dirty();
+      checkCurrentCompositeStatus();
+      renderCalendar();
+    });
+
+    $('rname').addEventListener('input', dirty);
+
+    function checkCurrentCompositeStatus() {
+      const curId = String($('rid').value || '').trim();
+      const curDate = $('rdate').value;
+      if (!curId || !curDate) return;
+
+      const blockedForId = getBlockedDatesForCurrentId();
+      if (blockedForId.has(curDate)) {
+        // This composite key (reportid, reportdate) is already saved!
+        isViewingSavedReport = true;
+        $('reportModeTag').textContent = `• Viewing Saved [${curId} · ${curDate}]`;
+        $('reportModeTag').style.color = 'var(--pri-hover)';
+      } else {
+        // Available for this ID
+        isViewingSavedReport = false;
+        $('reportModeTag').textContent = `• New Report [${curId}]`;
+        $('reportModeTag').style.color = 'var(--ok)';
+      }
+    }
+
+    // --- CALENDAR WITH COMPOSITE KEY (REPORTID, REPORTDATE) BLOCKING ---
+    function formatYMD(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function findFirstAvailableDateForId(id) {
+      const blocked = getBlockedDatesForCurrentId();
+      const d = new Date();
+      for (let i = 0; i < 365; i++) {
+        const candidate = new Date(d);
+        candidate.setDate(d.getDate() + i);
+        const ymd = formatYMD(candidate);
+        if (!blocked.has(ymd)) return ymd;
+      }
+      return formatYMD(new Date());
+    }
+
+    function renderCalendar() {
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"];
+      const currentId = String($('rid').value || '').trim();
+      $('calMonthYear').textContent = `${monthNames[calMonth]} ${calYear}`;
+
+      const grid = $('calDaysGrid');
+      grid.innerHTML = '';
+
+      const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay(); // 0 is Sun
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+
+      const todayYMD = formatYMD(new Date());
+      const selectedYMD = $('rdate').value;
+      const blockedDates = getBlockedDatesForCurrentId();
+
+      // Previous month trailing days
+      for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+        const dayNum = daysInPrevMonth - i;
+        const cell = document.createElement('div');
+        cell.className = 'cal-day other-month';
+        cell.textContent = dayNum;
+        grid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(calYear, calMonth, day);
+        const ymd = formatYMD(dateObj);
+        const cell = document.createElement('div');
+        cell.className = 'cal-day';
+        cell.textContent = day;
+
+        const isBlockedForThisId = currentId && blockedDates.has(ymd);
+        const isSelected = ymd === selectedYMD;
+        const isToday = ymd === todayYMD;
+
+        if (isToday) cell.classList.add('today');
+        if (isSelected) cell.classList.add('selected');
+
+        if (isBlockedForThisId) {
+          // Date blocked for this report ID (composite key reportid, reportdate already exists!)
+          cell.classList.add('disabled', 'has-report');
+          cell.title = `Report ID '${currentId}' already saved for date ${ymd}. View via Search above.`;
+        } else {
+          // Date available for this report ID
+          cell.classList.add('available');
+          cell.title = currentId ? `Available date for ID '${currentId}' (${ymd})` : `Select date (${ymd})`;
+          cell.onclick = () => {
+            selectDateForReport(ymd);
+            closeCalendar();
+          };
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function selectDateForReport(ymd) {
+      const oldDate = $('rdate').value;
+      if (ymd === oldDate) return;
+
+      $('rdate').value = ymd;
+      $('dateDisplayVal').textContent = ymd;
+      const curId = String($('rid').value || '').trim();
+
+      // When changing date on a saved report or when rows exist, PRESERVE all existing rows!
+      if (loadedOriginalDate || rows.length > 0) {
+        dirty();
+        if (loadedOriginalDate) {
+          isViewingSavedReport = true;
+          $('reportModeTag').textContent = `• Updating Date [${loadedOriginalId || curId} · ${ymd}]`;
+          $('reportModeTag').style.color = 'var(--pri-hover)';
+          setStatus(`● Date updated from ${loadedOriginalDate} to ${ymd} (Click 'Save Report' to apply)`, 'dirty');
+        } else {
+          isViewingSavedReport = false;
+          $('reportModeTag').textContent = curId ? `• New Report [${curId}]` : '• New Report Mode';
+          $('reportModeTag').style.color = 'var(--ok)';
+          setStatus(`● Date set to ${ymd}`, 'dirty');
+        }
+      } else {
+        // Only if report was blank with 0 rows
+        rows = [];
+        render();
+        setStatus(`New report mode · ID: ${curId || '(unassigned)'} · Date: ${ymd}`, 'dirty');
+      }
+      renderCalendar();
+    }
+
+    function toggleCalendar() {
+      const popover = $('calPopover');
+      const isVisible = popover.classList.contains('show');
+      if (isVisible) {
+        closeCalendar();
+      } else {
+        const currentVal = $('rdate').value;
+        if (currentVal) {
+          const parts = currentVal.split('-');
+          calYear = parseInt(parts[0], 10);
+          calMonth = parseInt(parts[1], 10) - 1;
+        }
+        renderCalendar();
+        popover.classList.add('show');
+      }
+    }
+
+    function closeCalendar() {
+      $('calPopover').classList.remove('show');
+    }
+
+    $('datePickerBtn').onclick = e => {
+      e.stopPropagation();
+      toggleCalendar();
+    };
+
+    $('calPrev').onclick = e => {
+      e.stopPropagation();
+      calMonth--;
+      if (calMonth < 0) {
+        calMonth = 11;
+        calYear--;
+      }
+      renderCalendar();
+    };
+
+    $('calNext').onclick = e => {
+      e.stopPropagation();
+      calMonth++;
+      if (calMonth > 11) {
+        calMonth = 0;
+        calYear++;
+      }
+      renderCalendar();
+    };
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.date-picker-wrap')) {
+        closeCalendar();
+      }
+    });
+
+    // --- + NEW REPORT BUTTON WORKFLOW ---
+    function initNewReport() {
+      closeCalendar();
+      // Completely empty all fields
+      $('rid').value = '';
+      $('rname').value = '';
+      $('rdate').value = '';
+      $('dateDisplayVal').textContent = 'Select Available Date';
+
+      loadedOriginalId = null;
+      loadedOriginalDate = null;
+      isViewingSavedReport = false;
+      $('reportModeTag').textContent = '• New Report (Unsaved)';
+      $('reportModeTag').style.color = 'var(--ok)';
+      
+      rows = []; // Empty rows
+      if ($('tblSearch').value) {
+        $('tblSearch').value = '';
+      }
+      render();
+      setStatus('New report started · Please enter Report ID, Name, and Date', 'dirty');
+      
+      calYear = new Date().getFullYear();
+      calMonth = new Date().getMonth();
+      renderCalendar();
+
+      // Focus on Report ID field
+      $('rid').focus();
+    }
+
+    $('btnNewReport').onclick = initNewReport;
+
+    // --- VIEW PREVIOUSLY CREATED REPORTS (COMPOSITE KEY LOOKUP) ---
+    async function loadReportByCompositeKey(id, date) {
+      if (!date) return;
+      try {
+        let url = '/api/report?date=' + encodeURIComponent(date);
+        if (id) url += '&id=' + encodeURIComponent(id);
+        const r = await fetch(url);
+        if (r.status === 401) return location.href = '/';
+        const data = await r.json();
+        applyReportData(data, id, date);
+      } catch (err) {
+        setStatus('Error loading report', 'dirty');
+      }
+    }
+
+    function applyReportData(data, targetId, targetDate) {
+      $('rdate').value = targetDate;
+      $('dateDisplayVal').textContent = targetDate;
+      
+      if (data && data.rows) {
+        rows = data.rows;
+        $('rid').value = data.id || targetId;
+        $('rname').value = data.name || '';
+        loadedOriginalId = data.id || targetId;
+        loadedOriginalDate = data.date || targetDate;
+        isViewingSavedReport = true;
+        $('reportModeTag').textContent = `• Viewing Saved [${loadedOriginalId} · ${loadedOriginalDate}]`;
+        $('reportModeTag').style.color = 'var(--pri-hover)';
+        setStatus(`Loaded saved report [${loadedOriginalId} · ${loadedOriginalDate}] · Saved at ${new Date(data.savedAt).toLocaleTimeString()}`, 'ok');
+      } else {
+        rows = [];
+        if (targetId) $('rid').value = targetId;
+        loadedOriginalId = null;
+        loadedOriginalDate = null;
+        isViewingSavedReport = false;
+        $('reportModeTag').textContent = `• New Report [${targetId || 'Unassigned'}]`;
+        $('reportModeTag').style.color = 'var(--ok)';
+        setStatus('New report (not saved yet)', 'dirty');
+      }
+      render();
+      renderCalendar();
+    }
+
+    function highlightMandatory(id) {
+      const el = $(id);
+      if (!el) return;
+      el.style.borderColor = 'var(--bad)';
+      el.style.boxShadow = '0 0 0 3px var(--bad-soft)';
+      setTimeout(() => {
+        el.style.borderColor = '';
+        el.style.boxShadow = '';
+      }, 2500);
+    }
+
+    // Save report with composite key (reportid, reportdate) - Top 3 fields are mandatory
+    $('save').onclick = async () => {
+      const reportId = String($('rid').value || '').trim();
+      const reportName = String($('rname').value || '').trim();
+      const date = String($('rdate').value || '').trim();
+
+      // Top 3 fields mandatory check
+      if (!reportId) {
+        setStatus('⚠️ Report ID is mandatory. Please enter a Report ID.', 'dirty');
+        highlightMandatory('rid');
+        $('rid').focus();
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Report ID Missing',
+            text: 'Report ID is mandatory. Please enter a Report ID.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        }
+        return;
+      }
+      if (!reportName) {
+        setStatus('⚠️ Report Name is mandatory. Please enter a Report / Counter Name.', 'dirty');
+        highlightMandatory('rname');
+        $('rname').focus();
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Report Name Missing',
+            text: 'Report Name is mandatory. Please enter a Report / Counter Name.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        }
+        return;
+      }
+      if (!date) {
+        setStatus('⚠️ Report Date is mandatory. Please select a Date.', 'dirty');
+        highlightMandatory('datePickerBtn');
+        toggleCalendar();
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Report Date Missing',
+            text: 'Report Date is mandatory. Please select an available date.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        }
+        return;
+      }
+
+      // Check for duplicate report: if creating or moving to an existing (reportid, reportdate)
+      const isUpdatingExactSelf = loadedOriginalId && loadedOriginalDate &&
+        loadedOriginalId.trim().toLowerCase() === reportId.toLowerCase() &&
+        loadedOriginalDate === date;
+
+      const duplicateExists = savedReportsCache.some(r =>
+        String(r.id || '').trim().toLowerCase() === reportId.toLowerCase() &&
+        r.date === date
+      );
+
+      if (!isUpdatingExactSelf && duplicateExists) {
+        setStatus(`⚠️ Duplicate Report: ID '${reportId}' on date '${date}' already exists!`, 'dirty');
+        highlightMandatory('rid');
+        highlightMandatory('datePickerBtn');
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Duplicate Report Exists',
+            html: `<div style="font-size:14px;color:#94a3b8;line-height:1.6;margin-top:6px;">
+                    A report with ID <strong>${escapeXml(reportId)}</strong> and Date <strong>${escapeXml(date)}</strong> already exists.<br><br>
+                    Please choose a different Report ID or an available date, or search for the existing report above.
+                  </div>`,
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        }
+        return;
+      }
+
+      $('save').disabled = true;
+      setStatus('Saving report...', '');
+      try {
+        const r = await fetch('/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: reportId,
+            name: reportName,
+            date: date,
+            rows,
+            originalId: loadedOriginalId,
+            originalDate: loadedOriginalDate
+          })
+        });
+        if (r.status === 401) return location.href = '/';
+        const j = await r.json();
+        if (r.ok) {
+          const wasDateChanged = loadedOriginalDate && loadedOriginalDate !== date;
+          setStatus(`Saved ✓ [${reportId} · ${date}] ${wasDateChanged ? '(Date updated)' : ''} at ` + new Date(j.savedAt).toLocaleTimeString(), 'ok');
+          loadedOriginalId = reportId;
+          loadedOriginalDate = date;
+          isViewingSavedReport = true;
+          $('reportModeTag').textContent = `• Viewing Saved [${reportId} · ${date}]`;
+          $('reportModeTag').style.color = 'var(--pri-hover)';
+          await fetchSavedReports();
+          renderCalendar();
+
+          // SweetAlert2 notification modal for indication
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: wasDateChanged ? 'Report Date Updated!' : 'Report Saved Successfully!',
+              html: `<div style="font-size:14px;color:#94a3b8;line-height:1.6;margin-top:6px;">
+                      Report <strong>${escapeXml(reportId)}</strong> (${escapeXml(reportName)})<br>
+                      for Date <strong>${escapeXml(date)}</strong> has been safely recorded.
+                    </div>`,
+              confirmButtonText: 'OK',
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc',
+              timer: 3000,
+              timerProgressBar: true,
+              backdrop: 'rgba(0, 0, 0, 0.75)'
+            });
+          }
+        } else {
+          setStatus('⚠️ ' + (j.error || 'Save failed'), 'dirty');
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Save Failed',
+              text: j.error || 'Could not save report',
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc'
+            });
+          }
+        }
+      } catch (err) {
+        setStatus('Save error. Try again.', 'dirty');
+      } finally {
+        $('save').disabled = false;
+      }
+    };
+
+    // Live search for past reports using composite key representation
+    let searchDebounce = null;
+    $('searchReports').addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      const q = $('searchReports').value.trim();
+      if (!q) {
+        $('searchDropdown').classList.remove('show');
+        return;
+      }
+      searchDebounce = setTimeout(async () => {
+        try {
+          const res = await fetch('/api/reports?q=' + encodeURIComponent(q));
+          if (!res.ok) return;
+          const reports = await res.json();
+          renderSearchDropdown(reports);
+        } catch {}
+      }, 200);
+    });
+
+    function renderSearchDropdown(reports) {
+      const dd = $('searchDropdown');
+      dd.innerHTML = '';
+      if (!reports || reports.length === 0) {
+        dd.innerHTML = '<div style="padding:14px;font-size:13px;color:var(--tx-muted);text-align:center;">No saved reports matching query.</div>';
+        dd.classList.add('show');
+        return;
+      }
+
+      reports.slice(0, 8).forEach(rep => {
+        const item = document.createElement('div');
+        item.className = 'search-item';
+        const balColor = rep.totalBalance < 0 ? 'var(--bad)' : 'var(--ok)';
+        item.innerHTML = `
+          <div class="search-item-info">
+            <span class="search-item-title"><strong style="color:var(--pri-hover);">${rep.id}</strong> · ${rep.date} (${rep.name || 'Unnamed'})</span>
+            <span class="search-item-sub">${rep.rowCount} tickets · Bal: <strong style="color:${balColor}">₹${f(rep.totalBalance)}</strong> · Saved by ${rep.user}</span>
+          </div>
+          <button class="ghost btn-sm" type="button">Open & View</button>
+        `;
+        item.onclick = () => {
+          loadReportByCompositeKey(rep.id, rep.date);
+          $('searchDropdown').classList.remove('show');
+          $('searchReports').value = '';
+        };
+        dd.appendChild(item);
+      });
+      dd.classList.add('show');
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.report-search-input-wrap')) {
+        $('searchDropdown').classList.remove('show');
+      }
+    });
+
+    // Modal: Browse all saved reports
+    async function fetchSavedReports() {
+      try {
+        const res = await fetch('/api/reports');
+        if (res.ok) {
+          savedReportsCache = await res.json();
+        }
+      } catch {}
+    }
+
+    function renderReportsModal(list) {
+      const container = $('savedReportsList');
+      container.innerHTML = '';
+      if (!list || list.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:28px;color:var(--tx-muted);">No saved reports found in history.</div>';
+        return;
+      }
+
+      list.forEach(rep => {
+        const card = document.createElement('div');
+        card.className = 'saved-report-card';
+        card.innerHTML = `
+          <div>
+            <div style="font-weight:700;color:var(--tx);font-size:14px;">
+              <span style="color:var(--pri-hover);">${rep.id}</span> — ${rep.date}
+            </div>
+            <div style="font-size:12px;color:var(--tx-secondary);margin-top:2px;">Name: ${rep.name || 'None'} · Rows: ${rep.rowCount} · User: ${rep.user}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:800;font-size:14px;color:${rep.totalBalance < 0 ? 'var(--bad)' : 'var(--ok)'}">₹${f(rep.totalBalance)}</div>
+            <span style="font-size:11px;color:var(--tx-muted);">${new Date(rep.savedAt).toLocaleDateString()}</span>
+          </div>
+        `;
+        card.onclick = () => {
+          loadReportByCompositeKey(rep.id, rep.date);
+          $('reportsModal').classList.remove('show');
+        };
+        container.appendChild(card);
+      });
+    }
+
+    $('btnBrowseReports').addEventListener('click', async () => {
+      await fetchSavedReports();
+      renderReportsModal(savedReportsCache);
+      $('modalSearchInput').value = '';
+      $('reportsModal').classList.add('show');
+    });
+
+    $('closeModal').addEventListener('click', () => {
+      $('reportsModal').classList.remove('show');
+    });
+
+    $('reportsModal').addEventListener('click', e => {
+      if (e.target === $('reportsModal')) {
+        $('reportsModal').classList.remove('show');
+      }
+    });
+
+    $('modalSearchInput').addEventListener('input', () => {
+      const q = $('modalSearchInput').value.trim().toLowerCase();
+      const filtered = savedReportsCache.filter(r =>
+        r.id.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.date.toLowerCase().includes(q) ||
+        r.user.toLowerCase().includes(q)
+      );
+      renderReportsModal(filtered);
+    });
+
+    // Print Report
+    function printReport() {
+      if (rows.length === 0) {
+        alert('There is no data to print. Please add at least one row.');
+        return;
+      }
+      $('printTimestamp').textContent = new Date().toLocaleString();
+      window.print();
+    }
+    $('btnPrint').onclick = printReport;
+
+    // Excel XML Export (Zero-dependency, native Excel format)
+    function escapeXml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    function exportToExcel() {
+      const repId = String($('rid').value || '').trim() || 'Report';
+      const repDate = $('rdate').value || new Date().toLocaleDateString('en-CA');
+      const repName = String($('rname').value || '').trim() || 'Counter';
+
+      if (rows.length === 0) {
+        alert('There is no data to export. Please add at least one row.');
+        return;
+      }
+
+      let totalQ = 0, totalG = 0, totalW = 0;
+      const rowsXml = rows.map((r, idx) => {
+        const rate = +r.rate || 0;
+        const qty = +r.qty || 0;
+        const trat = n(rate * qty);
+        const win = +r.win || 0;
+        const bal = n(trat - win);
+        totalQ += qty;
+        totalG += trat;
+        totalW += win;
+
+        return `
+      <Row ss:Height="20">
+        <Cell ss:StyleID="CellCenter"><Data ss:Type="Number">${idx + 1}</Data></Cell>
+        <Cell ss:StyleID="CellLeft"><Data ss:Type="String">${escapeXml(r.ticket || '')}</Data></Cell>
+        <Cell ss:StyleID="CellCurrency"><Data ss:Type="Number">${rate}</Data></Cell>
+        <Cell ss:StyleID="CellNumber"><Data ss:Type="Number">${qty}</Data></Cell>
+        <Cell ss:StyleID="CellCurrency"><Data ss:Type="Number">${trat}</Data></Cell>
+        <Cell ss:StyleID="CellCurrency"><Data ss:Type="Number">${win}</Data></Cell>
+        <Cell ss:StyleID="${bal < 0 ? 'CellNegative' : 'CellCurrency'}"><Data ss:Type="Number">${bal}</Data></Cell>
+      </Row>`;
+      }).join('');
+
+      const totalBal = totalG - totalW;
+
+      const xml = `<?xml version="1.0" encoding="utf-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:html="http://www.w3.org/TR/REC-html40">
+  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+    <Title>Daily Report - ${escapeXml(repId)}</Title>
+    <Author>Daily Report System</Author>
+    <Created>${new Date().toISOString()}</Created>
+  </DocumentProperties>
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Font ss:FontName="Segoe UI" ss:Size="11" ss:Color="#000000"/>
+    </Style>
+    <Style ss:ID="Title">
+      <Font ss:FontName="Segoe UI" ss:Size="15" ss:Bold="1" ss:Color="#EA580C"/>
+    </Style>
+    <Style ss:ID="MetaLabel">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#475569"/>
+    </Style>
+    <Style ss:ID="MetaVal">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#0F172A"/>
+    </Style>
+    <Style ss:ID="TableHeader">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#1E293B" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="CellLeft">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/></Borders>
+    </Style>
+    <Style ss:ID="CellCenter">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/></Borders>
+    </Style>
+    <Style ss:ID="CellNumber">
+      <NumberFormat ss:Format="#,##0"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/></Borders>
+    </Style>
+    <Style ss:ID="CellCurrency">
+      <NumberFormat ss:Format="₹#,##0.00"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/></Borders>
+    </Style>
+    <Style ss:ID="CellNegative">
+      <Font ss:Color="#E11D48" ss:Bold="1"/>
+      <NumberFormat ss:Format="₹#,##0.00"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/></Borders>
+    </Style>
+    <Style ss:ID="TotalLabel">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#0F172A"/>
+      <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#EA580C"/></Borders>
+    </Style>
+    <Style ss:ID="TotalNum">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#0F172A"/>
+      <NumberFormat ss:Format="#,##0"/>
+      <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#EA580C"/></Borders>
+    </Style>
+    <Style ss:ID="TotalCur">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="#0F172A"/>
+      <NumberFormat ss:Format="₹#,##0.00"/>
+      <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#EA580C"/></Borders>
+    </Style>
+    <Style ss:ID="TotalBal">
+      <Font ss:FontName="Segoe UI" ss:Bold="1" ss:Color="${totalBal < 0 ? '#E11D48' : '#059669'}"/>
+      <NumberFormat ss:Format="₹#,##0.00"/>
+      <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Borders><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#EA580C"/></Borders>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Daily Report">
+    <Table ss:DefaultRowHeight="20">
+      <Column ss:Width="40"/>
+      <Column ss:Width="160"/>
+      <Column ss:Width="90"/>
+      <Column ss:Width="90"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="120"/>
+      <Row ss:Height="26">
+        <Cell ss:MergeAcross="6" ss:StyleID="Title"><Data ss:Type="String">DAILY REPORT - ${escapeXml(repId)}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell ss:StyleID="MetaLabel"><Data ss:Type="String">Report ID:</Data></Cell>
+        <Cell ss:StyleID="MetaVal"><Data ss:Type="String">${escapeXml(repId)}</Data></Cell>
+        <Cell ss:StyleID="MetaLabel"><Data ss:Type="String">Date:</Data></Cell>
+        <Cell ss:StyleID="MetaVal"><Data ss:Type="String">${escapeXml(repDate)}</Data></Cell>
+        <Cell ss:StyleID="MetaLabel"><Data ss:Type="String">Counter/Name:</Data></Cell>
+        <Cell ss:MergeAcross="1" ss:StyleID="MetaVal"><Data ss:Type="String">${escapeXml(repName)}</Data></Cell>
+      </Row>
+      <Row ss:Height="8"/>
+      <Row ss:Height="22">
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">#</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Ticket</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Rate (₹)</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Qty</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Total Rate (₹)</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Win (₹)</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Balance (₹)</Data></Cell>
+      </Row>
+      ${rowsXml}
+      <Row ss:Height="24">
+        <Cell ss:MergeAcross="1" ss:StyleID="TotalLabel"><Data ss:Type="String">TOTAL</Data></Cell>
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="TotalNum"><Data ss:Type="Number">${totalQ}</Data></Cell>
+        <Cell ss:StyleID="TotalCur"><Data ss:Type="Number">${totalG}</Data></Cell>
+        <Cell ss:StyleID="TotalCur"><Data ss:Type="Number">${totalW}</Data></Cell>
+        <Cell ss:StyleID="TotalBal"><Data ss:Type="Number">${totalBal}</Data></Cell>
+      </Row>
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+      const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const link = document.createElement('a');
+      const filename = `Daily_Report_${repId}_${repDate}.xls`;
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+    $('btnExport').onclick = exportToExcel;
+
+    // Logout
+    $('out').onclick = async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      location.href = '/';
+    };
+
+    // Keyboard shortcut Ctrl+S to save, Ctrl+P to print, Esc to close modals
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        $('save').click();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        printReport();
+      }
+      if (e.key === 'Escape') {
+        $('reportsModal').classList.remove('show');
+        $('searchDropdown').classList.remove('show');
+        closeCalendar();
+      }
+    });
+
+    // Initialize session and initial data
+    (async () => {
+      const m = await fetch('/api/me');
+      if (!m.ok) return location.href = '/';
+      const user = await m.json();
+
+      $('who').textContent = '👤 ' + user.username;
+      if (user.role === 'admin') {
+        $('adminLink').style.display = 'inline-flex';
+        const adminBadge = document.createElement('span');
+        adminBadge.className = 'badge badge-admin';
+        adminBadge.textContent = 'Admin';
+        $('who').appendChild(adminBadge);
+      }
+
+      await fetchSavedReports();
+
+      // Start fresh with first available date
+      initNewReport();
+    })();
+  </script>
+</body>
+</html>

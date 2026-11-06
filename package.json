@@ -1,0 +1,10 @@
+{
+  "name": "daily-report",
+  "version": "1.0.0",
+  "description": "Daily Report Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test_suite.js"
+  }
+}

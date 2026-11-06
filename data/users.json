@@ -1,0 +1,15 @@
+[
+  {
+    "username": "admin",
+    "role": "admin",
+    "salt": "a8a1f9dcb0f2c907",
+    "hash": "fb6679ca8ef850ed75a1f7af356d4b2d0c2077f7abae619ff25e76835f5e0864"
+  },
+  {
+    "username": "Esakki-Raj",
+    "role": "user",
+    "salt": "d62b629c695d3497",
+    "hash": "9673b8158a3f80dfb17c28a920a3f7aa298468745204cebdee6702bc6ce7764f",
+    "createdAt": "2026-11-06T13:41:58.163Z"
+  }
+]

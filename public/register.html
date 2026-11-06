@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Report · User Directory & Registration</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/sweetalert2.all.min.js"></script>
+</head>
+<body>
+  <!-- Header Navigation -->
+  <header class="top">
+    <div class="top-brand">
+      <div class="logo-badge">DR</div>
+      <h2>Daily Report · Administration</h2>
+    </div>
+    <div class="r">
+      <span id="who" class="badge"></span>
+      <a href="/report" class="ghost btn-sm">📊 Back to Report</a>
+      <button class="ghost btn-sm" id="out" title="Sign out of account">Logout</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="admin-grid">
+      <!-- Registration Card -->
+      <section class="admin-card">
+        <h3>Register New User</h3>
+        <p class="sub">Provision access credentials and permission levels</p>
+
+        <form id="regForm" onsubmit="return false;">
+          <label for="regUser">Username</label>
+          <input id="regUser" placeholder="e.g. operator_counter1" autocomplete="off" required>
+
+          <label for="regPass" style="margin-top: 14px;">Password</label>
+          <input id="regPass" type="password" placeholder="At least 4 characters" autocomplete="new-password" required>
+
+          <label for="regRole" style="margin-top: 14px;">Account Role</label>
+          <select id="regRole">
+            <option value="user">Standard User (Report Access)</option>
+            <option value="admin">Administrator (Full Access & User Management)</option>
+          </select>
+
+          <div id="regErr" class="err"></div>
+          <div id="regSucc" class="succ"></div>
+
+          <button id="regBtn" class="btn" type="submit" style="width: 100%; margin-top: 20px; padding: 11px;">
+            + Create Account
+          </button>
+        </form>
+      </section>
+
+      <!-- User Accounts List Card -->
+      <section class="admin-card">
+        <h3>System User Directory</h3>
+        <p class="sub">Active team accounts and assigned permissions</p>
+
+        <div class="users-table-wrap">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>User Account</th>
+                <th>Role</th>
+                <th>Registered</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="usersList">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--tx-muted); padding: 24px;">Loading user directory...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let currentAdmin = null;
+
+    // Load users list
+    async function loadUsers() {
+      const tbody = $('usersList');
+      try {
+        const res = await fetch('/api/users');
+        if (res.status === 401) return location.href = '/';
+        if (res.status === 403) return location.href = '/report';
+        const users = await res.json();
+
+        tbody.innerHTML = '';
+        if (!users || users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--tx-muted);padding:20px;">No registered accounts found.</td></tr>';
+          return;
+        }
+
+        users.forEach(u => {
+          const tr = document.createElement('tr');
+          const isSelf = currentAdmin && currentAdmin.username.toLowerCase() === u.username.toLowerCase();
+          const roleClass = u.role === 'admin' ? 'role-admin' : 'role-user';
+          const createdStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Initial Setup';
+          const initial = u.username.charAt(0).toUpperCase();
+
+          tr.innerHTML = `
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 26px; height: 26px; border-radius: 6px; background: var(--surface-elevated); border: 1px solid var(--line); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: var(--pri-hover);">${initial}</span>
+                <span style="font-weight: 600; color: var(--tx);">${u.username}</span>
+                ${isSelf ? '<span style="font-size:11px;color:var(--tx-muted);">(You)</span>' : ''}
+              </div>
+            </td>
+            <td><span class="role-tag ${roleClass}">${u.role}</span></td>
+            <td style="color: var(--tx-secondary); font-size: 12px;">${createdStr}</td>
+            <td style="text-align: right;">
+              ${isSelf ? '<span style="font-size:12px;color:var(--tx-muted);">Active</span>' : `
+                <button class="btn-danger btn-sm" onclick="deleteUser('${u.username}')">Delete</button>
+              `}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:var(--bad);text-align:center;padding:16px;">Failed to load user directory.</td></tr>';
+      }
+    }
+
+    // Register user
+    async function registerUser() {
+      const errBox = $('regErr');
+      const succBox = $('regSucc');
+      errBox.classList.remove('show');
+      succBox.classList.remove('show');
+
+      const username = $('regUser').value.trim();
+      const password = $('regPass').value;
+      const role = $('regRole').value;
+
+      if (!username || !password) {
+        errBox.textContent = 'Please fill out both username and password.';
+        errBox.classList.add('show');
+        return;
+      }
+
+      $('regBtn').disabled = true;
+      $('regBtn').textContent = 'Creating account...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          succBox.textContent = data.message || `Account '${username}' created successfully!`;
+          succBox.classList.add('show');
+          $('regUser').value = '';
+          $('regPass').value = '';
+          loadUsers();
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Account Created',
+              text: data.message || `User '${username}' registered successfully!`,
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc',
+              timer: 2500
+            });
+          }
+        } else {
+          errBox.textContent = data.error || 'Failed to create user.';
+          errBox.classList.add('show');
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Registration Error',
+              text: data.error || 'Failed to create user account.',
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc'
+            });
+          }
+        }
+      } catch (err) {
+        errBox.textContent = 'Network error. Please try again.';
+        errBox.classList.add('show');
+      } finally {
+        $('regBtn').disabled = false;
+        $('regBtn').textContent = '+ Create Account';
+      }
+    }
+
+    // Delete user
+    async function deleteUser(username) {
+      if (window.Swal) {
+        const result = await Swal.fire({
+          title: `Delete '${username}'?`,
+          text: `Are you sure you want to permanently delete user account '${username}'?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ff5c6c',
+          cancelButtonColor: '#263252',
+          confirmButtonText: 'Yes, Delete',
+          cancelButtonText: 'Cancel',
+          background: '#161e33',
+          color: '#f8fafc'
+        });
+        if (!result.isConfirmed) return;
+      } else {
+        if (!confirm(`Are you sure you want to permanently delete user account '${username}'?`)) return;
+      }
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          loadUsers();
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: 'User Deleted',
+              text: `User '${username}' has been removed.`,
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc',
+              timer: 2000
+            });
+          }
+        } else {
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Deletion Failed',
+              text: data.error || 'Failed to delete user',
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc'
+            });
+          } else {
+            alert(data.error || 'Failed to delete user');
+          }
+        }
+      } catch (err) {
+        alert('Network error while deleting user');
+      }
+    }
+
+    $('regForm').addEventListener('submit', registerUser);
+
+    // Logout
+    $('out').onclick = async () => {
+      await fetch('/api/logout', { method: 'POST' });
+      location.href = '/';
+    };
+
+    // Auth verification: ensure logged in and is admin
+    (async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (!res.ok) return location.href = '/';
+        const user = await res.json();
+        if (user.role !== 'admin') {
+          return location.href = '/report';
+        }
+        currentAdmin = user;
+        $('who').textContent = '👤 ' + user.username;
+        const adminBadge = document.createElement('span');
+        adminBadge.className = 'badge badge-admin';
+        adminBadge.textContent = 'Admin';
+        $('who').appendChild(adminBadge);
+
+        loadUsers();
+      } catch {
+        location.href = '/';
+      }
+    })();
+  </script>
+</body>
+</html>

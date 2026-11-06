@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Report · Login</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="logo-big">DR</div>
+      <h1>Daily Report</h1>
+      <p class="sub">Sign in to access your sales and settlement reports</p>
+      
+      <form id="loginForm" onsubmit="return false;">
+        <label for="u">Username</label>
+        <input id="u" name="username" autocomplete="username" placeholder="Enter your username" autofocus required>
+        
+        <label for="p" style="margin-top: 14px;">Password</label>
+        <input id="p" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+        
+        <div class="err" id="e"></div>
+        <button class="btn" id="go" type="submit">Sign in</button>
+      </form>
+
+      <!-- <div class="login-hint">
+        Default administrator credentials: <code>admin</code> / <code>admin123</code>
+      </div> -->
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    
+    async function login() {
+      const errBox = $('e');
+      errBox.classList.remove('show');
+      errBox.textContent = '';
+      
+      const username = $('u').value.trim();
+      const password = $('p').value;
+      if (!username || !password) {
+        errBox.textContent = 'Please enter both username and password';
+        errBox.classList.add('show');
+        return;
+      }
+
+      $('go').disabled = true;
+      $('go').textContent = 'Signing in...';
+
+      try {
+        const r = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await r.json();
+        if (r.ok) {
+          location.href = '/report';
+        } else {
+          errBox.textContent = data.error || 'Invalid credentials';
+          errBox.classList.add('show');
+        }
+      } catch (err) {
+        errBox.textContent = 'Connection error. Please try again.';
+        errBox.classList.add('show');
+      } finally {
+        $('go').disabled = false;
+        $('go').textContent = 'Sign in';
+      }
+    }
+
+    $('loginForm').addEventListener('submit', login);
+
+    // Redirect if already authenticated
+    fetch('/api/me').then(r => {
+      if (r.ok) location.href = '/report';
+    });
+  </script>
+</body>
+</html>
