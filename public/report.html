@@ -131,9 +131,10 @@
         <span id="filter-count"></span>
       </div>
       <div class="bar-right">
-        <span id="status" style="display:none;"></span>
+        <span id="status"></span>
         <button class="ghost" id="btnPrint" type="button" title="Print this report (Ctrl+P)">🖨️ Print</button>
         <button class="ghost" id="btnExport" type="button" title="Download as Excel spreadsheet">📥 Export Excel</button>
+        <button class="btn-danger btn-sm" id="btnDeleteReport" type="button" style="display: none;" title="Delete this saved report">🗑️ Delete</button>
         <button class="btn" id="save" title="Save changes (Ctrl+S)">💾 Save Report</button>
       </div>
     </div>
@@ -648,6 +649,7 @@
       loadedOriginalId = null;
       loadedOriginalDate = null;
       isViewingSavedReport = false;
+      $('btnDeleteReport').style.display = 'none';
       $('reportModeTag').textContent = '• New Report (Unsaved)';
       $('reportModeTag').style.color = 'var(--ok)';
       
@@ -694,6 +696,7 @@
         loadedOriginalId = data.id || targetId;
         loadedOriginalDate = data.date || targetDate;
         isViewingSavedReport = true;
+        $('btnDeleteReport').style.display = 'inline-flex';
         $('reportModeTag').textContent = `• Viewing Saved [${loadedOriginalId} · ${loadedOriginalDate}]`;
         $('reportModeTag').style.color = 'var(--pri-hover)';
         setStatus(`Loaded saved report [${loadedOriginalId} · ${loadedOriginalDate}] · Saved at ${new Date(data.savedAt).toLocaleTimeString()}`, 'ok');
@@ -703,6 +706,7 @@
         loadedOriginalId = null;
         loadedOriginalDate = null;
         isViewingSavedReport = false;
+        $('btnDeleteReport').style.display = 'none';
         $('reportModeTag').textContent = `• New Report [${targetId || 'Unassigned'}]`;
         $('reportModeTag').style.color = 'var(--ok)';
         setStatus('New report (not saved yet)', 'dirty');
@@ -953,13 +957,16 @@
         card.innerHTML = `
           <div>
             <div style="font-weight:700;color:var(--tx);font-size:14px;">
-              <span style="color:var(--pri-hover);">${rep.id}</span> — ${rep.date}
+              <span style="color:var(--pri-hover);">${escapeXml(rep.id)}</span> — ${escapeXml(rep.date)}
             </div>
-            <div style="font-size:12px;color:var(--tx-secondary);margin-top:2px;">Name: ${rep.name || 'None'} · Rows: ${rep.rowCount} · User: ${rep.user}</div>
+            <div style="font-size:12px;color:var(--tx-secondary);margin-top:2px;">Name: ${escapeXml(rep.name || 'None')} · Rows: ${rep.rowCount} · User: ${escapeXml(rep.user)}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-weight:800;font-size:14px;color:${rep.totalBalance < 0 ? 'var(--bad)' : 'var(--ok)'}">₹${f(rep.totalBalance)}</div>
-            <span style="font-size:11px;color:var(--tx-muted);">${new Date(rep.savedAt).toLocaleDateString()}</span>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="text-align:right;">
+              <div style="font-weight:800;font-size:14px;color:${rep.totalBalance < 0 ? 'var(--bad)' : 'var(--ok)'}">₹${f(rep.totalBalance)}</div>
+              <span style="font-size:11px;color:var(--tx-muted);">${new Date(rep.savedAt).toLocaleDateString()}</span>
+            </div>
+            <button class="btn-danger btn-sm" type="button" title="Delete report" onclick="event.stopPropagation(); deleteReportItem('${escapeXml(rep.id)}', '${escapeXml(rep.date)}')">Delete</button>
           </div>
         `;
         card.onclick = () => {
@@ -969,6 +976,106 @@
         container.appendChild(card);
       });
     }
+
+    // Delete a report from modal list
+    async function deleteReportItem(repId, repDate) {
+      if (window.Swal) {
+        const res = await Swal.fire({
+          title: 'Delete Report?',
+          html: `<div style="font-size:14px;color:#94a3b8;line-height:1.6;margin-top:6px;">
+                  Are you sure you want to delete report:<br>
+                  <strong style="color:#f8fafc;">${escapeXml(repId)}</strong> for Date <strong style="color:#f8fafc;">${escapeXml(repDate)}</strong>?<br><br>
+                  <span style="color:var(--bad);">This action cannot be undone.</span>
+                </div>`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#ff5c6c',
+          cancelButtonColor: '#263252',
+          confirmButtonText: 'Yes, Delete Report',
+          cancelButtonText: 'Cancel',
+          background: '#161e33',
+          color: '#f8fafc'
+        });
+        if (!res.isConfirmed) return;
+      } else {
+        if (!confirm(`Delete report '${repId}' for date '${repDate}'?`)) return;
+      }
+
+      try {
+        const response = await fetch('/api/report', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: repId, date: repDate })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Report Deleted',
+              text: data.message || `Report '${repId}' for date '${repDate}' was permanently deleted.`,
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc',
+              timer: 2200
+            });
+          }
+          await fetchSavedReports();
+          const q = $('modalSearchInput').value.trim().toLowerCase();
+          const filtered = savedReportsCache.filter(r =>
+            r.id.toLowerCase().includes(q) ||
+            r.name.toLowerCase().includes(q) ||
+            r.date.toLowerCase().includes(q) ||
+            r.user.toLowerCase().includes(q)
+          );
+          renderReportsModal(filtered);
+          renderCalendar();
+
+          // If the currently loaded report is the one that got deleted, reset editor
+          if (loadedOriginalId === repId && loadedOriginalDate === repDate) {
+            initNewReport();
+          }
+        } else {
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Delete Failed',
+              text: data.error || 'Failed to delete report',
+              confirmButtonColor: '#ea580c',
+              background: '#161e33',
+              color: '#f8fafc'
+            });
+          } else {
+            alert(data.error || 'Failed to delete report');
+          }
+        }
+      } catch (err) {
+        alert('Network error while deleting report');
+      }
+    }
+
+    // Delete currently loaded report from toolbar button
+    async function deleteCurrentReport() {
+      const repId = loadedOriginalId || $('rid').value.trim();
+      const repDate = loadedOriginalDate || $('rdate').value.trim();
+
+      if (!repId || !repDate) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'info',
+            title: 'No Report Selected',
+            text: 'Please select or load a saved report to delete.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        }
+        return;
+      }
+
+      await deleteReportItem(repId, repDate);
+    }
+    $('btnDeleteReport').onclick = deleteCurrentReport;
 
     $('btnBrowseReports').addEventListener('click', async () => {
       await fetchSavedReports();

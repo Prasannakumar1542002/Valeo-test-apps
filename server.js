@@ -241,6 +241,46 @@ http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, key: compositeKey, id: reportId, date: reportDate, savedAt: all[compositeKey].savedAt });
     }
 
+    // Reports: Delete report by composite key (reportid, reportdate)
+    if (p === '/api/report' && req.method === 'DELETE') {
+      const b = await body(req);
+      const reportId = String(b.id || url.searchParams.get('id') || '').trim();
+      const reportDate = String(b.date || url.searchParams.get('date') || '').trim();
+
+      if (!reportId || !reportDate) {
+        return json(res, 400, { error: 'Both Report ID and Report Date are required to delete a report' });
+      }
+
+      const all = readJSON(REPORTS, {});
+      const compositeKey = `${reportId}|${reportDate}`;
+      const existing = all[compositeKey] || Object.values(all).find(x =>
+        String(x.id).trim().toLowerCase() === reportId.toLowerCase() &&
+        x.date === reportDate
+      );
+
+      if (!existing) {
+        return json(res, 404, { error: `Report '${reportId}' for date '${reportDate}' not found` });
+      }
+
+      // Check ownership or admin role
+      if (session.role !== 'admin' && existing.user !== session.username) {
+        return json(res, 403, { error: 'Forbidden: You do not have permission to delete this report' });
+      }
+
+      // Remove from storage
+      const targetKey = Object.keys(all).find(k =>
+        all[k] === existing ||
+        k.toLowerCase() === compositeKey.toLowerCase()
+      );
+      if (targetKey) delete all[targetKey];
+      writeJSON(REPORTS, all);
+
+      return json(res, 200, {
+        ok: true,
+        message: `Report '${reportId}' for date '${reportDate}' deleted successfully`
+      });
+    }
+
     // Admin Only: List users
     if (p === '/api/users' && req.method === 'GET') {
       if (session.role !== 'admin') return json(res, 403, { error: 'Forbidden: Admins only' });

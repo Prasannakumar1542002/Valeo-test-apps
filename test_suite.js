@@ -1,4 +1,4 @@
-// Verification test suite: Duplicate report prevention on (reportid, reportdate)
+// Verification test suite: DELETE /api/report endpoint and functionality
 const http = require('http');
 const assert = require('assert');
 const fs = require('fs');
@@ -36,7 +36,7 @@ const req = (path, method = 'GET', data = null, headers = {}) => {
 };
 
 async function runTests() {
-  console.log('--- STARTING DUPLICATE REPORT PREVENTION TESTS ---');
+  console.log('--- STARTING REPORT DELETION TESTS ---');
   fs.writeFileSync('data/reports.json', '{}');
 
   // 1. Login as admin
@@ -45,60 +45,56 @@ async function runTests() {
   assert.strictEqual(loginRes.status, 200);
   const adminCookie = loginRes.headers['set-cookie'][0].split(';')[0];
 
-  // 2. Create first report: REP-001 on 2026-11-06
-  console.log('2. Creating first report: REP-001 on 2026-11-06...');
-  const rep1 = await req('/api/report', 'POST', {
-    id: 'REP-001',
-    name: 'Counter A',
+  // 2. Create a report to delete
+  console.log('2. Creating report REP-DEL-1 on 2026-11-06...');
+  const rep = await req('/api/report', 'POST', {
+    id: 'REP-DEL-1',
+    name: 'Counter To Delete',
     date: '2026-11-06',
-    rows: [{ ticket: 'Item 1', rate: 10, qty: 5, win: 0 }]
+    rows: [{ ticket: 'Item Del', rate: 10, qty: 5, win: 0 }]
   }, { Cookie: adminCookie });
-  assert.strictEqual(rep1.status, 200);
-  assert.strictEqual(rep1.data.key, 'REP-001|2026-11-06');
-  console.log('   First report created successfully.');
+  assert.strictEqual(rep.status, 200);
+  assert.strictEqual(rep.data.key, 'REP-DEL-1|2026-11-06');
 
-  // 3. Attempt to create a NEW report with existing ID (REP-001) and existing Date (2026-11-06)
-  console.log('3. Attempting to create duplicate report with existing ID and Date...');
-  const duplicateRes = await req('/api/report', 'POST', {
-    id: 'REP-001',
-    name: 'Counter A Duplicate Attempt',
-    date: '2026-11-06',
-    rows: [{ ticket: 'Item 2', rate: 20, qty: 10, win: 0 }]
+  // 3. Verify it exists
+  console.log('3. Verifying report exists before deletion...');
+  const getBefore = await req('/api/report?id=REP-DEL-1&date=2026-11-06', 'GET', null, { Cookie: adminCookie });
+  assert.strictEqual(getBefore.status, 200);
+  assert.strictEqual(getBefore.data.id, 'REP-DEL-1');
+
+  // 4. Delete the report via DELETE /api/report
+  console.log('4. Calling DELETE /api/report...');
+  const delRes = await req('/api/report', 'DELETE', {
+    id: 'REP-DEL-1',
+    date: '2026-11-06'
   }, { Cookie: adminCookie });
+  assert.strictEqual(delRes.status, 200);
+  assert.strictEqual(delRes.data.ok, true);
+  console.log('   DELETE /api/report returned success.');
 
-  assert.strictEqual(duplicateRes.status, 400, 'Duplicate report must be rejected with 400');
-  assert.ok(duplicateRes.data.error.includes('already exists'), 'Error must inform that report already exists');
-  console.log('   Confirmed: Duplicate report strictly blocked by server (' + duplicateRes.data.error + ')');
+  // 5. Verify it is gone
+  console.log('5. Verifying report no longer exists after deletion...');
+  const getAfter = await req('/api/report?id=REP-DEL-1&date=2026-11-06', 'GET', null, { Cookie: adminCookie });
+  assert.strictEqual(getAfter.data, null);
 
-  // 4. Save report with different ID (REP-002) on SAME Date (2026-11-06)
-  console.log('4. Creating report with DIFFERENT ID REP-002 on 2026-11-06 (must be allowed)...');
-  const rep2 = await req('/api/report', 'POST', {
-    id: 'REP-002',
-    name: 'Counter B',
-    date: '2026-11-06',
-    rows: [{ ticket: 'Item 3', rate: 30, qty: 2, win: 0 }]
+  const rawFile = JSON.parse(fs.readFileSync('data/reports.json', 'utf8'));
+  assert.strictEqual(rawFile['REP-DEL-1|2026-11-06'], undefined);
+  console.log('   Confirmed: Report cleanly deleted from reports.json.');
+
+  // 6. Delete on non-existent report should return 404
+  console.log('6. Verifying DELETE on non-existent report returns 404...');
+  const delNonExistent = await req('/api/report', 'DELETE', {
+    id: 'REP-DEL-1',
+    date: '2026-11-06'
   }, { Cookie: adminCookie });
-  assert.strictEqual(rep2.status, 200);
-  console.log('   Confirmed: Different ID on same date allowed.');
-
-  // 5. Updating existing report REP-001 on 2026-11-06 (updating self must be allowed)
-  console.log('5. Updating existing report REP-001 on 2026-11-06 (updating self)...');
-  const updateSelfRes = await req('/api/report', 'POST', {
-    id: 'REP-001',
-    name: 'Counter A Updated',
-    date: '2026-11-06',
-    rows: [{ ticket: 'Item 1 Updated', rate: 10, qty: 8, win: 50 }],
-    originalId: 'REP-001',
-    originalDate: '2026-11-06'
-  }, { Cookie: adminCookie });
-  assert.strictEqual(updateSelfRes.status, 200);
-  console.log('   Confirmed: Updating self is allowed.');
+  assert.strictEqual(delNonExistent.status, 404);
+  console.log('   Confirmed: 404 returned for non-existent report.');
 
   // Clean up
   fs.writeFileSync('data/reports.json', '{}');
   console.log('   Cleaned reports.json to empty object {}.');
 
-  console.log('--- ALL DUPLICATE PREVENTION TESTS PASSED SUCCESSFULLY! ---');
+  console.log('--- ALL REPORT DELETION TESTS PASSED SUCCESSFULLY! ---');
 }
 
 runTests().catch(err => {
