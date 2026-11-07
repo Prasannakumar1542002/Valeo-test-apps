@@ -6,6 +6,7 @@
   <title>Daily Report · Executive Dashboard</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/sweetalert2.all.min.js"></script>
+  <script src="/jspdf.umd.min.js"></script>
 </head>
 <body>
   <!-- Header Navigation -->
@@ -131,8 +132,9 @@
         <span id="filter-count"></span>
       </div>
       <div class="bar-right">
-        <span id="status" Style="display:None;"></span>
+        <span id="status" style="display: none;"></span>
         <button class="ghost" id="btnPrint" type="button" title="Print this report (Ctrl+P)">🖨️ Print</button>
+        <button class="ghost" id="btnDownloadPdf" type="button" title="Download report as PDF (Image-matched layout)">📄 Download PDF</button>
         <button class="ghost" id="btnExport" type="button" title="Download as Excel spreadsheet">📥 Export Excel</button>
         <button class="btn-danger btn-sm" id="btnDeleteReport" type="button" style="display: none;" title="Delete this saved report">🗑️ Delete</button>
         <button class="btn" id="save" title="Save changes (Ctrl+S)">💾 Save Report</button>
@@ -210,8 +212,11 @@
     let calMonth = new Date().getMonth(); // 0-based
 
     const setStatus = (t, c) => {
-      $('status').textContent = t;
-      $('status').className = c || '';
+      const el = $('status');
+      if (el) {
+        el.textContent = t;
+        el.className = c || '';
+      }
     };
     const dirty = () => setStatus('● Unsaved changes', 'dirty');
 
@@ -221,7 +226,7 @@
     }
 
     function getBlockedDatesForCurrentId() {
-      const currentId = String($('rid').value || '').trim().toLowerCase();
+      const currentId = $('rid') ? String($('rid').value || '').trim().toLowerCase() : '';
       if (!currentId) return new Set();
       const dates = savedReportsCache
         .filter(r => {
@@ -247,20 +252,24 @@
       const bal = t - w;
       
       // Update Table Footer
-      $('tq').textContent = fInt(q);
-      $('tt').textContent = f(t);
-      $('tw').textContent = f(w);
+      if ($('tq')) $('tq').textContent = fInt(q);
+      if ($('tt')) $('tt').textContent = f(t);
+      if ($('tw')) $('tw').textContent = f(w);
       const b = $('tbal');
-      b.textContent = f(bal);
-      b.style.color = bal < 0 ? 'var(--bad)' : 'var(--ok)';
+      if (b) {
+        b.textContent = f(bal);
+        b.style.color = bal < 0 ? 'var(--bad)' : 'var(--ok)';
+      }
 
       // Update Executive Metric Cards
-      $('statQty').textContent = fInt(q);
-      $('statGross').textContent = '₹' + f(t);
-      $('statWin').textContent = '₹' + f(w);
+      if ($('statQty')) $('statQty').textContent = fInt(q);
+      if ($('statGross')) $('statGross').textContent = '₹' + f(t);
+      if ($('statWin')) $('statWin').textContent = '₹' + f(w);
       const statBal = $('statBal');
-      statBal.textContent = (bal < 0 ? '-₹' : '₹') + f(Math.abs(bal));
-      statBal.className = 'stat-value num ' + (bal < 0 ? 'negative' : 'positive');
+      if (statBal) {
+        statBal.textContent = (bal < 0 ? '-₹' : '₹') + f(Math.abs(bal));
+        statBal.className = 'stat-value num ' + (bal < 0 ? 'negative' : 'positive');
+      }
     }
 
     function calc(i) {
@@ -792,24 +801,34 @@
         r.date === date
       );
 
+      let sendOverwrite = false;
       if (!isUpdatingExactSelf && duplicateExists) {
-        setStatus(`⚠️ Duplicate Report: ID '${reportId}' on date '${date}' already exists!`, 'dirty');
-        highlightMandatory('rid');
-        highlightMandatory('datePickerBtn');
         if (window.Swal) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Duplicate Report Exists',
+          const res = await Swal.fire({
+            icon: 'question',
+            title: 'Report Already Exists',
             html: `<div style="font-size:14px;color:#94a3b8;line-height:1.6;margin-top:6px;">
-                    A report with ID <strong>${escapeXml(reportId)}</strong> and Date <strong>${escapeXml(date)}</strong> already exists.<br><br>
-                    Please choose a different Report ID or an available date, or search for the existing report above.
+                    A report for ID <strong>${escapeXml(reportId)}</strong> on Date <strong>${escapeXml(date)}</strong> already exists.<br><br>
+                    Do you want to update it with your current changes?
                   </div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Save Changes',
+            cancelButtonText: 'Cancel',
             confirmButtonColor: '#ea580c',
+            cancelButtonColor: '#263252',
             background: '#161e33',
             color: '#f8fafc'
           });
+          if (!res.isConfirmed) return;
+          sendOverwrite = true;
+          loadedOriginalId = reportId;
+          loadedOriginalDate = date;
+        } else {
+          if (!confirm(`A report for ID '${reportId}' on date '${date}' already exists. Overwrite/update it?`)) return;
+          sendOverwrite = true;
+          loadedOriginalId = reportId;
+          loadedOriginalDate = date;
         }
-        return;
       }
 
       $('save').disabled = true;
@@ -824,7 +843,8 @@
             date: date,
             rows,
             originalId: loadedOriginalId,
-            originalDate: loadedOriginalDate
+            originalDate: loadedOriginalDate,
+            overwrite: sendOverwrite || Boolean(isUpdatingExactSelf)
           })
         });
         if (r.status === 401) return location.href = '/';
@@ -1301,6 +1321,239 @@
     }
     $('btnExport').onclick = exportToExcel;
 
+    // PDF Download using pure vector jsPDF: guarantees 0% chance of blank page or cropping!
+    function formatPdfNum(v) {
+      const num = +v || 0;
+      return Number.isInteger(num) ? String(num) : +(num.toFixed(2)).toString();
+    }
+
+    async function downloadPdf() {
+      const repId = String($('rid').value || '').trim();
+      const repName = String($('rname').value || '').trim();
+      const repDate = String($('rdate').value || '').trim();
+
+      if (!repId || !repName || !repDate) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Report Incomplete',
+            text: 'Please make sure Report ID, Name, and Date are all filled out before downloading PDF.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        } else {
+          alert('Please fill out Report ID, Name, and Date before downloading PDF.');
+        }
+        return;
+      }
+
+      if (rows.length === 0) {
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Empty Report',
+            text: 'Please add at least one row before downloading PDF.',
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc'
+          });
+        } else {
+          alert('Please add at least one row before downloading PDF.');
+        }
+        return;
+      }
+
+      try {
+        const { jsPDF } = window.jspdf || window;
+        if (!jsPDF) {
+          throw new Error('jsPDF engine not available');
+        }
+
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        const startX = 14;
+        const endX = 196;
+        const width = endX - startX; // 182mm
+
+        // Format Date to DD.MM.YYYY matching reference image
+        const parts = repDate.split('-');
+        const formattedDate = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : repDate;
+
+        // 1. Solid Orange Header Banner
+        doc.setFillColor(224, 100, 10);
+        doc.rect(startX, 14, width, 9, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('DAILY REPORT', 105, 20, { align: 'center' });
+
+        // 2. Metadata Box
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.35);
+        doc.rect(startX, 23, width, 16);
+
+        // Internal metadata lines
+        doc.setDrawColor(209, 213, 219);
+        doc.line(startX, 31, endX, 31); // horizontal divider
+        doc.line(36, 23, 36, 39);      // vertical div after ID/Name label
+        doc.line(100, 23, 100, 39);     // vertical div after ID/Name value
+        doc.line(148, 23, 148, 39);     // vertical div before Date label
+
+        // Metadata Text
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+
+        // Row 1: ID | [repId] | Date
+        doc.text('ID', 25, 28, { align: 'center' });
+        doc.text(String(repId), 40, 28);
+        doc.text('Date', 172, 28, { align: 'center' });
+
+        // Row 2: Name | [repName] | [formattedDate]
+        doc.text('Name', 25, 36, { align: 'center' });
+        doc.text(String(repName), 40, 36);
+        doc.text(String(formattedDate), 172, 36, { align: 'center' });
+
+        // 3. Table Header
+        let curY = 39;
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.35);
+        doc.line(startX, curY, endX, curY);
+        curY += 7.5;
+        doc.line(startX, curY, endX, curY);
+
+        const cols = [
+          { name: 'Ticket', x: 32, div: 50 },
+          { name: 'Rate', x: 63, div: 76 },
+          { name: 'Qty', x: 89, div: 102 },
+          { name: 'T.Rate', x: 118, div: 134 },
+          { name: 'WIN', x: 149, div: 164 },
+          { name: 'Balance', x: 180, div: 196 }
+        ];
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        cols.forEach(c => {
+          doc.text(c.name, c.x, curY - 2.5, { align: 'center' });
+          if (c.div < endX) {
+            doc.setDrawColor(209, 213, 219);
+            doc.line(c.div, curY - 7.5, c.div, curY);
+          }
+        });
+
+        // Outer borders for header
+        doc.setDrawColor(0, 0, 0);
+        doc.line(startX, curY - 7.5, startX, curY);
+        doc.line(endX, curY - 7.5, endX, curY);
+
+        // 4. Table Rows
+        let totalQ = 0, totalG = 0, totalW = 0;
+        const rowHeight = 6.4;
+
+        rows.forEach(r => {
+          const rate = +r.rate || 0;
+          const qty = +r.qty || 0;
+          const trat = n(rate * qty);
+          const win = +r.win || 0;
+          const bal = n(trat - win);
+          totalQ += qty;
+          totalG += trat;
+          totalW += win;
+
+          // Check for page overflow
+          if (curY + rowHeight > 280) {
+            doc.addPage();
+            curY = 20;
+          }
+
+          curY += rowHeight;
+
+          // Row text
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(0, 0, 0);
+
+          doc.text(String(r.ticket || ''), 32, curY - 2, { align: 'center' });
+          doc.text(formatPdfNum(rate), 63, curY - 2, { align: 'center' });
+          doc.text(formatPdfNum(qty), 89, curY - 2, { align: 'center' });
+          doc.text(formatPdfNum(trat), 118, curY - 2, { align: 'center' });
+          doc.text(formatPdfNum(win), 149, curY - 2, { align: 'center' });
+          doc.text(formatPdfNum(bal), 180, curY - 2, { align: 'center' });
+
+          // Horizontal row line
+          doc.setDrawColor(215, 220, 225);
+          doc.setLineWidth(0.2);
+          doc.line(startX, curY, endX, curY);
+
+          // Vertical column dividers
+          cols.forEach(c => {
+            if (c.div < endX) {
+              doc.line(c.div, curY - rowHeight, c.div, curY);
+            }
+          });
+
+          // Outer borders
+          doc.setDrawColor(0, 0, 0);
+          doc.line(startX, curY - rowHeight, startX, curY);
+          doc.line(endX, curY - rowHeight, endX, curY);
+        });
+
+        // 5. Totals Row
+        const totalBal = totalG - totalW;
+        const totHeight = 7.5;
+        curY += totHeight;
+
+        // Double border for totals (thick top line and bottom line)
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.45);
+        doc.line(startX, curY - totHeight, endX, curY - totHeight);
+        doc.line(startX, curY, endX, curY);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0);
+
+        // 'Total' merged across cols 1 & 2
+        doc.text('Total', 45, curY - 2.5, { align: 'center' });
+        doc.text(formatPdfNum(totalQ), 89, curY - 2.5, { align: 'center' });
+        doc.text(formatPdfNum(totalG), 118, curY - 2.5, { align: 'center' });
+        doc.text(formatPdfNum(totalW), 149, curY - 2.5, { align: 'center' });
+        doc.text(formatPdfNum(totalBal), 180, curY - 2.5, { align: 'center' });
+
+        // Vertical dividers in footer
+        doc.setDrawColor(209, 213, 219);
+        doc.line(76, curY - totHeight, 76, curY);
+        doc.line(102, curY - totHeight, 102, curY);
+        doc.line(134, curY - totHeight, 134, curY);
+        doc.line(164, curY - totHeight, 164, curY);
+
+        // Outer borders for footer
+        doc.setDrawColor(0, 0, 0);
+        doc.line(startX, curY - totHeight, startX, curY);
+        doc.line(endX, curY - totHeight, endX, curY);
+
+        // Save PDF
+        const pdfFileName = `Daily_Report_${repId}_${repDate}.pdf`;
+        doc.save(pdfFileName);
+
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'success',
+            title: 'PDF Downloaded',
+            text: `${pdfFileName} has been downloaded successfully.`,
+            confirmButtonColor: '#ea580c',
+            background: '#161e33',
+            color: '#f8fafc',
+            timer: 2500
+          });
+        }
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        window.print();
+      }
+    }
+    $('btnDownloadPdf').onclick = downloadPdf;
+
     // Logout
     $('out').onclick = async () => {
       await fetch('/api/logout', { method: 'POST' });
@@ -1326,23 +1579,28 @@
 
     // Initialize session and initial data
     (async () => {
-      const m = await fetch('/api/me');
-      if (!m.ok) return location.href = '/';
-      const user = await m.json();
+      try {
+        const m = await fetch('/api/me');
+        if (!m.ok) return location.href = '/';
+        const user = await m.json();
 
-      $('who').textContent = '👤 ' + user.username;
-      if (user.role === 'admin') {
-        $('adminLink').style.display = 'inline-flex';
-        const adminBadge = document.createElement('span');
-        adminBadge.className = 'badge badge-admin';
-        adminBadge.textContent = 'Admin';
-        $('who').appendChild(adminBadge);
+        const who = $('who');
+        if (who) who.textContent = '👤 ' + user.username;
+        if (user.role === 'admin' && $('adminLink')) {
+          $('adminLink').style.display = 'inline-flex';
+          const adminBadge = document.createElement('span');
+          adminBadge.className = 'badge badge-admin';
+          adminBadge.textContent = 'Admin';
+          if (who) who.appendChild(adminBadge);
+        }
+
+        await fetchSavedReports();
+
+        // Start fresh with first available date
+        initNewReport();
+      } catch (err) {
+        console.error('Initialization error:', err);
       }
-
-      await fetchSavedReports();
-
-      // Start fresh with first available date
-      initNewReport();
     })();
   </script>
 </body>

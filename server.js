@@ -204,15 +204,17 @@ http.createServer(async (req, res) => {
       // Composite key: reportid|reportdate
       const compositeKey = `${reportId}|${reportDate}`;
 
-      // Check if updating the exact same existing report
-      const isUpdatingSelf = originalId && originalDate &&
+      // Check if updating the exact same existing report or explicit overwrite confirmed
+      const allowOverwrite = Boolean(b.overwrite);
+      const isUpdatingSelf = allowOverwrite || (originalId && originalDate &&
         originalId.toLowerCase() === reportId.toLowerCase() &&
-        originalDate === reportDate;
+        originalDate === reportDate);
 
-      // Disallow creating or overwriting an existing report with the same ID and date
+      // Disallow unintended duplicate creation
       if (!isUpdatingSelf && all[compositeKey]) {
         return json(res, 400, {
-          error: `A report with ID '${reportId}' and Date '${reportDate}' already exists. Duplicate reports are not allowed.`
+          error: `A report with ID '${reportId}' and Date '${reportDate}' already exists.`,
+          duplicate: true
         });
       }
 

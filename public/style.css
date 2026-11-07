@@ -1261,3 +1261,79 @@ tfoot td.l {
     color: #000000 !important;
   }
 }
+
+/* Isolated PDF Render Container Styles (Matches reference image exactly) */
+#pdfRenderContainer {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-family: Arial, -apple-system, sans-serif !important;
+  padding: 14px !important;
+  width: 700px !important;
+  box-sizing: border-box !important;
+}
+
+#pdfRenderContainer * {
+  box-sizing: border-box !important;
+}
+
+#pdfRenderContainer table {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  border-collapse: collapse !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  table-layout: fixed !important;
+}
+
+#pdfRenderContainer thead th {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 8px 6px !important;
+  border: 1px solid #d1d5db !important;
+  position: static !important;
+  text-align: center !important;
+}
+
+#pdfRenderContainer tbody td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 5px 6px !important;
+  border: 1px solid #d1d5db !important;
+  text-align: center !important;
+}
+
+#pdfRenderContainer tfoot td {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  padding: 8px 6px !important;
+  border: 1px solid #d1d5db !important;
+  position: static !important;
+  text-align: center !important;
+}
+
+#pdfRenderContainer .pdf-header-bar {
+  background: #e0640a !important;
+  color: #ffffff !important;
+  text-align: center !important;
+  font-weight: 800 !important;
+  font-size: 16px !important;
+  padding: 10px 6px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+}
+
+#pdfRenderContainer .pdf-meta-box td {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #000000 !important;
+  padding: 7px 12px !important;
+  border: 1px solid #d1d5db !important;
+  background: #ffffff !important;
+}
