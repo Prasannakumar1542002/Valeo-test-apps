@@ -265,7 +265,7 @@ label {
 /* Layout Wrapper */
 .wrap {
   width: 100%;
-  max-width: 1140px;
+  max-width: 1240px;
   margin: 22px auto 40px;
   padding: 0 20px;
   box-sizing: border-box;
@@ -570,30 +570,50 @@ label {
 /* Action Toolbar */
 .bar {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-.bar-left, .bar-right {
+.bar-left {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.bar-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+}
+
+.bar button {
+  padding: 7px 12px;
+  font-size: 12.5px;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ticket-filter-box {
   position: relative;
-  min-width: 240px;
+  width: 190px;
+  min-width: 140px;
+  flex: 0 1 190px;
 }
 
 .ticket-filter-box input {
-  padding-left: 32px;
-  padding-right: 28px;
-  height: 36px;
-  font-size: 13px;
+  padding-left: 30px;
+  padding-right: 26px;
+  height: 34px;
+  font-size: 12.5px;
 }
 
 .ticket-filter-box .search-icon {
@@ -1081,6 +1101,10 @@ tfoot td.l {
   .admin-grid {
     grid-template-columns: 1fr;
   }
+  .bar {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
 }
 
 @media (max-width: 680px) {
@@ -1096,13 +1120,16 @@ tfoot td.l {
   .bar {
     flex-direction: column;
     align-items: stretch;
+    overflow-x: visible;
   }
   .bar-left, .bar-right {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   .ticket-filter-box {
     width: 100%;
+    flex: 1 1 100%;
   }
 }
 
