@@ -90,11 +90,34 @@ async function runTests() {
   assert.strictEqual(delNonExistent.status, 404);
   console.log('   Confirmed: 404 returned for non-existent report.');
 
+  // 7. Verify empty row creation and retrieval (empty string rather than 0)
+  console.log('7. Verifying saving and retrieving report with empty rows...');
+  const emptyRowRep = await req('/api/report', 'POST', {
+    id: 'REP-EMPTY-1',
+    name: 'Empty Row Verification',
+    date: '2026-11-06',
+    rows: [
+      { ticket: '', rate: '', qty: '', win: '' },
+      { ticket: 'ItemPartial', rate: 25, qty: 4, win: '' }
+    ]
+  }, { Cookie: adminCookie });
+  assert.strictEqual(emptyRowRep.status, 200);
+
+  const getEmpty = await req('/api/report?id=REP-EMPTY-1&date=2026-11-06', 'GET', null, { Cookie: adminCookie });
+  assert.strictEqual(getEmpty.status, 200);
+  assert.strictEqual(getEmpty.data.rows[0].rate, '');
+  assert.strictEqual(getEmpty.data.rows[0].qty, '');
+  assert.strictEqual(getEmpty.data.rows[0].win, '');
+  assert.strictEqual(getEmpty.data.rows[1].rate, 25);
+  assert.strictEqual(getEmpty.data.rows[1].qty, 4);
+  assert.strictEqual(getEmpty.data.rows[1].win, '');
+  console.log('   Confirmed: Empty row fields preserved as empty string instead of 0.');
+
   // Clean up
   fs.writeFileSync('data/reports.json', '{}');
   console.log('   Cleaned reports.json to empty object {}.');
 
-  console.log('--- ALL REPORT DELETION TESTS PASSED SUCCESSFULLY! ---');
+  console.log('--- ALL REPORT TESTS PASSED SUCCESSFULLY! ---');
 }
 
 runTests().catch(err => {

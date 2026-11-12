@@ -233,9 +233,9 @@ http.createServer(async (req, res) => {
         user: session.username,
         rows: b.rows.map(r => ({
           ticket: String(r.ticket || ''),
-          rate: num(r.rate),
-          qty: num(r.qty),
-          win: num(r.win)
+          rate: (r.rate === '' || r.rate === null || r.rate === undefined) ? '' : num(r.rate),
+          qty: (r.qty === '' || r.qty === null || r.qty === undefined) ? '' : num(r.qty),
+          win: (r.win === '' || r.win === null || r.win === undefined) ? '' : num(r.win)
         })),
         savedAt: new Date().toISOString()
       };

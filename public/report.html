@@ -245,7 +245,7 @@
       let q = 0, t = 0, w = 0;
       rows.forEach(r => {
         q += +r.qty || 0;
-        t += n(r.rate * r.qty);
+        t += n((+r.rate || 0) * (+r.qty || 0));
         w += +r.win || 0;
       });
 
@@ -276,12 +276,31 @@
       const r = rows[i];
       const tr = document.querySelector(`#tb tr[data-i="${i}"]`);
       if (!tr) return;
-      const t = n(r.rate * r.qty);
-      const b = n(t - r.win);
-      tr.querySelector('.tr').value = f(t);
+
+      const hasVal = v => v !== '' && v !== null && v !== undefined;
+      const hasRate = hasVal(r.rate);
+      const hasQty = hasVal(r.qty);
+      const hasWin = hasVal(r.win);
+
+      const trInp = tr.querySelector('.tr');
       const bi = tr.querySelector('.bal');
-      bi.value = f(b);
-      bi.classList.toggle('neg', b < 0);
+
+      if (hasRate && hasQty) {
+        const t = n((+r.rate || 0) * (+r.qty || 0));
+        trInp.value = f(t);
+        const b = n(t - (+r.win || 0));
+        bi.value = f(b);
+        bi.classList.toggle('neg', b < 0);
+      } else if (hasWin) {
+        trInp.value = '';
+        const b = n(0 - (+r.win || 0));
+        bi.value = f(b);
+        bi.classList.toggle('neg', b < 0);
+      } else {
+        trInp.value = '';
+        bi.value = '';
+        bi.classList.remove('neg');
+      }
     }
 
     function render() {
@@ -321,16 +340,23 @@
 
         tr.innerHTML = `
           <td><input data-k="ticket" value="" placeholder="Ticket name"></td>
-          <td><input data-k="rate" type="number" step="any" placeholder="0"></td>
-          <td><input data-k="qty" type="number" step="any" placeholder="0"></td>
+          <td><input data-k="rate" type="number" step="any"></td>
+          <td><input data-k="qty" type="number" step="any"></td>
           <td><input class="tr" disabled tabindex="-1"></td>
-          <td><input data-k="win" type="number" step="any" placeholder="0"></td>
+          <td><input data-k="win" type="number" step="any"></td>
           <td><input class="bal" disabled tabindex="-1"></td>
           <td><button class="del" type="button" title="Delete row">✕</button></td>
         `;
 
         tr.querySelectorAll('input[data-k]').forEach(inp => {
-          inp.value = r[inp.dataset.k];
+          const k = inp.dataset.k;
+          let val = r[k];
+          // If the row has no value, ensure fields are empty instead of 0
+          const isRowCompletelyEmpty = !r.ticket && (!r.rate || r.rate === '') && (!r.qty || r.qty === '') && (!r.win || r.win === '');
+          if (isRowCompletelyEmpty && (val === 0 || val === '0')) {
+            val = '';
+          }
+          inp.value = (val !== undefined && val !== null) ? val : '';
         });
 
         tbody.appendChild(tr);
@@ -381,7 +407,12 @@
       const k = inp.dataset.k;
       if (!k) return;
       const i = +inp.closest('tr').dataset.i;
-      rows[i][k] = k === 'ticket' ? inp.value : (parseFloat(inp.value) || 0);
+      if (k === 'ticket') {
+        rows[i][k] = inp.value;
+      } else {
+        const val = inp.value.trim();
+        rows[i][k] = val === '' ? '' : (Number.isFinite(+val) ? +val : val);
+      }
       calc(i);
       totals();
       dirty();
@@ -436,7 +467,7 @@
     });
 
     $('add').onclick = () => {
-      rows.push({ ticket: '', rate: 0, qty: 0, win: 0 });
+      rows.push({ ticket: '', rate: '', qty: '', win: '' });
       if ($('tblSearch').value) {
         $('tblSearch').value = '';
       }
